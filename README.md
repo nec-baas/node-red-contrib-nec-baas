@@ -15,9 +15,9 @@ node-red-contrib-nec-baas
 インストール
 ------------
 
-Node-RED のユーザディレクトリ上で、以下のコマンドを実行してください。（`~/.node-red`など）
+Node-RED のルートディレクトリ上で、以下のコマンドを実行してください。
 
-npm install node-red-contrib-nec-baas-*.tgz
+npm install node-red-contrib-nec-baas
 
 アンインストール
 ------------
