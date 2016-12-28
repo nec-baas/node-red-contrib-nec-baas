@@ -1,0 +1,60 @@
+/**
+ * NEC Mobile Backend Platform
+ *
+ * Copyright (c) 2014-2016 NEC Corporation
+ *
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
+ *
+ * http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ */
+ 
+ <script type="text/javascript">
+    'use restrict';
+    
+    RED.nodes.registerType('nebula-server', {
+        category: 'config',
+        defaults: {
+            appId: { value: '', required: true },    // use credential
+            appKey: { value: '', required: true },   // use credential
+            tenantId: { value: '', required: true }, 
+            baseUri: { value: '', required: true },
+        },
+        credentials: {
+            appId: { type: "text"},
+            appKey: { type: "text"}
+        },
+        label: function() {
+            return this.tenantId;
+        },
+        oneditsave: function () {
+        }
+    });
+</script>
+
+<script type="text/x-red" data-template-name="nebula-server">
+    <div class="form-row">
+        <label for="node-config-input-tenantId"><i class="icon-tag"></i> Tenant ID</label>
+        <input type="text" id="node-config-input-tenantId">
+    </div>
+    <div class="form-row">
+        <label for="node-config-input-appId"><i class="icon-tag"></i> App ID</label>
+        <input type="text" id="node-config-input-appId">
+    </div>
+    <div class="form-row">
+        <label for="node-config-input-appKey"><i class="fa fa-lock"></i> App Key</label>
+        <input type="text" id="node-config-input-appKey">
+    </div>
+    <div class="form-row">
+        <label for="node-config-input-baseUri"><i class="fa fa-globe"></i> Base URI</label>
+        <input type="text" id="node-config-input-baseUri">
+    </div>
+</script>
+

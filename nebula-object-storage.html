@@ -1,0 +1,390 @@
+<!--
+  Copyright 2013, 2016 IBM Corp.
+
+  Licensed under the Apache License, Version 2.0 (the "License");
+  you may not use this file except in compliance with the License.
+  You may obtain a copy of the License at
+
+  http://www.apache.org/licenses/LICENSE-2.0
+
+  Unless required by applicable law or agreed to in writing, software
+  distributed under the License is distributed on an "AS IS" BASIS,
+  WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+  See the License for the specific language governing permissions and
+  limitations under the License.
+-->
+<!--
+  NEC Mobile Backend Platform
+
+  Copyright (c) 2014-2016 NEC Corporation
+
+  Licensed under the Apache License, Version 2.0 (the "License");
+  you may not use this file except in compliance with the License.
+  You may obtain a copy of the License at
+
+  http://www.apache.org/licenses/LICENSE-2.0
+
+  Unless required by applicable law or agreed to in writing, software
+  distributed under the License is distributed on an "AS IS" BASIS,
+  WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+  See the License for the specific language governing permissions and
+  limitations under the License.
+-->
+
+<script type="text/x-red" data-template-name="object in">
+    <div class="form-row">
+        <label for="node-input-name"><i class="fa fa-tag"></i> Name</label>
+        <input type="text" id="node-input-name">
+    </div>
+    <div class="form-row">
+        <label for="node-input-bucketName"><i class="fa fa-tag"></i> Bucket Name</label>
+        <input type="text" id="node-input-bucketName">
+    </div>  
+    <div class="form-row">
+        <label><i class="fa fa-check"></i> Clause</label>
+        <input type="checkbox" id="node-input-noClause" style="display: inline-block; width: auto; vertical-align: top;">
+        &nbsp;Get all objects?
+    </div>
+    <div class="form-row node-input-rule-container-row">
+        <ol id="node-input-rule-container"></ol>
+    </div>
+    <div class="form-row node-input-operator">
+        coupled with
+        <select id="node-input-operator" style="width:70px; margin-right:5px;">
+            <option value="OR">OR</option>
+            <option value="AND">AND</option>
+        </select>
+        conditions
+    </div>
+    <div class="form-row">
+        <label><i class="fa fa-check"></i> Sort</label>
+        <input type="text" id="node-input-sortKey" style="width: 100px">
+        <select type="text" id="node-input-sortType" style="width: 100px">
+            <option value="ASC">ASC</option>
+            <option value="DESC">DESC</option>
+    </select>
+    </div>
+    <div class="form-row">
+        <label for="node-input-projection"><i class="fa fa-check"></i> Projection</label>
+        <input type="text" id="node-input-projection">
+    </div>  
+    
+    <script>
+        $("#node-input-noClause").change(function() {
+            if ($("#node-input-noClause").prop("checked")) {
+                $("#dialog-form>div.node-input-rule-container-row").hide();
+                $(".node-input-operator").hide();
+            } else {
+                $("#dialog-form>div.node-input-rule-container-row").show();
+                $(".node-input-operator").show();
+            }
+        });
+    </script>
+</script>
+
+<script type="text/x-red" data-help-name="object in">
+    <p>Reads objects from the Nebula Server and sends the content as <code>msg.payload</code>.
+       
+    <p>For example, <code>msg.payload</code> contains array object:
+    <pre>
+[
+ {"_id": "57a1...", "name":"foo", ...},
+ {"_id": "57a2...", "name":"bar", ...},
+ {"_id": "57a3...", "name":"baz", ...},
+ ...
+]
+    </pre>
+    
+    <h4>Incoming messages</h4>
+    <code>msg.payload</code> contains object info.
+
+    <p>The bucketname can be configured in the node. If left blank it should be set 
+       by <code>msg.bucketname</code> on the incoming message.</p>
+       
+    <h4>Sending messages</h4>
+    <p>The function returns the messages<code>msg.result</code>,<code>msg.payload</code> to pass on to the next nodes
+    in the flow.</p>
+    
+    <h4>Search query condition</h4>
+    <p>Set the search query condition in the edit dialog.　If the key is blank, the row be ignored.
+    </p>
+
+    <p>If the provision is used, it should be set in JSON format as follows:
+    <pre>
+{"name":1, "time":1, "_id":0, ...}
+    </pre>
+    
+</script>
+
+<script type="text/javascript">
+    RED.nodes.registerType('object in', {
+        color:"#c0deed", //"#fdd0a2",
+        category: 'nec baas',
+        defaults: {
+            name: { value:"object"},
+            bucketName: { value: ""},
+            noClause: { value: false},
+            rules: { value:[{t:"eq", v:""}]}, 
+            operator: { value: "AND"},           
+            sortKey: { value: ""},
+            sortType: { value: "ASC"},
+            projection: { value: ""}
+        },
+        inputs:1,
+        outputs:1,
+        icon: "db.png",
+        align: 'left',
+        label: function() {
+            return this.name;
+        },
+        oneditprepare: function() {
+            var node = this;
+            var operators = [
+                {v:"eq",t:"=="},
+                {v:"neq",t:"!="},
+                {v:"lt",t:"<"},
+                {v:"lte",t:"<="},
+                {v:"gt",t:">"},
+                {v:"gte",t:">="},
+                {v:"exist",t:"exist"},
+                {v:"regex",t:"regex"}
+            ];
+            
+            var flags = [
+                {v:1,t:"true"},
+                {v:0,t:"false"}
+            ];
+            
+            var caseLabel = this._("switch.ignorecase");
+
+            function resizeRule(rule) {
+                var newWidth = rule.width();
+                var keyField = rule.find(".node-input-rule-key");
+                var selectField = rule.find(".node-input-rule-select");
+                var type = selectField.val()||"";
+                var valueField = rule.find(".node-input-rule-value");
+                var existSelectField = rule.find(".node-input-rule-exist-select");
+                
+                var selectWidth;
+                if (type.length < 6) {
+                    selectWidth = 60;
+                } else {
+                    selectWidth = 120;
+                }
+                if (newWidth == 0) { // editor hide,show
+                    newWidth = 400;
+                }
+                keyField.width(60);
+                selectField.width(selectWidth);
+                valueField.typedInput("width",(newWidth-selectWidth-130));
+                existSelectField.width(newWidth-selectWidth-130);
+            }
+
+            $("#node-input-rule-container").css('min-height','180px').css('min-width','450px').editableList({
+                addItem: function(container,i,opt) {
+                    if (i > 2) { // max 3 Items
+                        $("#node-input-rule-container").editableList('removeItem',opt);
+                        return;
+                    }
+                    var rule = opt;
+                    if (!rule.hasOwnProperty('t')) {
+                        rule.t = 'eq';
+                    }
+                    var row = $('<div/>').appendTo(container);
+                    var row2 = $('<div/>',{style:"padding-top: 5px; padding-left: 175px;"}).appendTo(container);
+
+                    var keyField = $('<input/>',{class:"node-input-rule-key",type:"text",style:"margin-left: 5px; width: 80px;"}).appendTo(row);
+                    
+                    var selectField = $('<select/>',{class:"node-input-rule-select", style:"width:120px; margin-left: 5px; text-align: center;"}).appendTo(row);
+                    for (var d in operators) {
+                        selectField.append($("<option></option>").val(operators[d].v).text(operators[d].t));
+                    }
+                    var valueField = $('<input/>',{class:"node-input-rule-value",type:"text",style:"margin-left: 5px; width: 145px;"}).appendTo(row).typedInput({default:'str',types:['msg','flow','global','str','num','bool','json']});
+                    
+                    var existSelectField = $('<select/>',{class:"node-input-rule-exist-select", style:"width:145px; margin-left: 5px; text-align: center;"}).appendTo(row);
+                    for (var d in flags) {
+                        existSelectField.append($("<option></option>").val(flags[d].v).text(flags[d].t));
+                    }
+                    
+                    var caseSensitive = $('<input/>',{id:"node-input-rule-case-"+i,class:"node-input-rule-case",type:"checkbox",style:"width:auto;vertical-align:top"}).appendTo(row2);
+                    $('<label/>',{for:"node-input-rule-case-"+i,style:"margin-left: 3px;"}).text(caseLabel).appendTo(row2);
+                    
+                    selectField.change(function() {
+                        resizeRule(container);
+                        var type = selectField.val();
+                        
+                        if (type === "exist") {
+                            valueField.typedInput('hide');
+                            existSelectField.show();
+                        } else {
+                            valueField.typedInput('show');
+                            existSelectField.hide();
+                        }
+
+                        if (type === "regex") {
+                            row2.show();                       
+                        } else {
+                            row2.hide();
+                        }
+                    });
+                    
+                    keyField.val(rule.k);
+                    selectField.val(rule.t);
+                    
+                    if (typeof rule.v != "undefined") {
+                        valueField.typedInput('value',rule.v);
+                        valueField.typedInput('type',rule.vt||'str');
+                    }
+                    existSelectField.val(rule.v);
+                    
+                    if (rule.case) {
+                        caseSensitive.prop('checked',true);
+                    } else {
+                        caseSensitive.prop('checked',false);
+                    }
+                    selectField.change();
+                },
+                removeItem: function(opt) {
+                    var rules = $("#node-input-rule-container").editableList('items');
+                    rules.each(function(i) { $(this).find(".node-input-rule-index").html(i+1); });
+                },
+                resizeItem: resizeRule,
+                sortItems: function(rules) {
+                    var rules = $("#node-input-rule-container").editableList('items');
+                    rules.each(function(i) { $(this).find(".node-input-rule-index").html(i+1); });
+                },
+                sortable: true,
+                removable: true
+            });
+
+            for (var i=0;i<this.rules.length;i++) {
+                var rule = this.rules[i];
+                $("#node-input-rule-container").editableList('addItem',rule);
+            }
+        },
+        oneditsave: function() {
+            var rules = $("#node-input-rule-container").editableList('items');
+            var node = this;
+            node.rules= [];
+            rules.each(function(i) {
+                var rule = $(this);
+                var type = rule.find(".node-input-rule-select").val();
+                var r = {t:type};
+                r.k = rule.find(".node-input-rule-key").val();
+
+                if (type === "exist") {
+                    r.v = rule.find(".node-input-rule-exist-select").val();
+                    r.vt = 'num';
+                } else {
+                    r.v = rule.find(".node-input-rule-value").typedInput('value');
+                    r.vt = rule.find(".node-input-rule-value").typedInput('type');
+                }
+                
+                if (type === "regex") {
+                    r.case = rule.find(".node-input-rule-case").prop("checked");
+                }
+                node.rules.push(r);
+            });
+        },
+        oneditresize: function(size) {
+            var rows = $("#dialog-form>div:not(.node-input-rule-container-row)");
+                                
+            var height = size.height;
+         
+            if (height >= 250) { // editor max height: 250   
+                height = 250;
+            }
+                
+            for (var i=0;i<rows.size();i++) {
+                height -= $(rows[i]).outerHeight(true);
+            }
+            var editorRow = $("#dialog-form>div.node-input-rule-container-row");
+            height -= (parseInt(editorRow.css("marginTop"))+parseInt(editorRow.css("marginBottom")));
+            $("#node-input-rule-container").editableList('height',height);
+        }
+    });
+</script>
+
+<script type="text/x-red" data-template-name="object out">
+    <div class="form-row">
+        <label for="node-input-bucketName"><i class="fa fa-tag"></i> Bucket Name</label>
+        <input type="text" id="node-input-bucketName">
+    </div>
+    
+    <div class="form-row">
+        <label for="node-input-action"><i class="fa fa-wrench"></i> Action</label>
+        <select type="text" id="node-input-action">
+            <option value="SAVE_OBJECT">save object</option>
+            <option value="DEL_OBJECT">delete all objects</option>
+            <option value="DEL_BUCKET">delete bucket</option>
+        </select>
+    </div>
+    
+    <div class="form-row node-input-createBucket">
+        <label>&nbsp;</label>
+        <input type="checkbox" id="node-input-createBucket" style="display: inline-block; width: auto; vertical-align: top;">
+        <label for="node-input-createBucket" style="width: 70%;"> Create bucket if it doesn't exist?</label>
+    </div>
+
+    <div class="form-row">
+        <label for="node-input-name"><i class="fa fa-tag"></i> Name</label>
+        <input type="text" id="node-input-name">
+    </div>
+
+    <div class="form-tips"><span data-i18n="function.tip"></span></div>
+
+    <script>
+        $("#node-input-action").change(function() {
+            var newAction = $("#node-input-action").val();
+            if (newAction != "SAVE_OBJECT") {
+                $(".node-input-createBucket").hide();
+            } else {
+                $(".node-input-createBucket").show();
+            }
+        });
+    </script>
+</script>
+
+<script type="text/x-red" data-help-name="object out">
+    <p>Writes <code>msg.payload</code> to the Nebula Server.
+
+    <p>Deletes all objects from the bucket specified.
+    
+    <p>Deletes the bucket specified. This operation requires <B>the master key</B>.
+        
+    <h4>Incoming messages</h4>
+    <code>msg.payload</code> contains object info.
+    
+    <p>The bucketname can be configured in the node. If left blank it should be set 
+       by <code>msg.bucketname</code> on the incoming message.</p>
+       
+    <h4>Sending messages</h4>
+    <p>The function returns the messages<code>msg.result</code>,<code>msg.payload</code> to pass on to the next nodes
+    in the flow.</p>
+    
+    <code>msg.payload</code> contains object/bucket info.
+       
+</script>
+
+<script type="text/javascript">
+    RED.nodes.registerType('object out', {
+        color:"#c0deed", //"#fdd0a2",
+        category: 'nec baas',
+        defaults: {
+            bucketName: { value: ""},
+            action: { value: "SAVE_OBJECT"},
+            createBucket: { value: false},
+            name: { value:"object"}
+        },
+        inputs:1,
+        outputs:1,
+        icon: "db.png",
+        align: 'right',
+        label: function() {
+            return this.name;
+        },
+        oneditsave: function() {
+        
+        }
+    });
+</script>
