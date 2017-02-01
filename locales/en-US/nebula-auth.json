@@ -1,0 +1,27 @@
+{
+    "nebula": {
+        "label": {
+            "name": "Name",
+            "initialize":"Initialize?",
+            "config": "Config",
+            "action": "Action",
+            "email": "Email",
+            "user": "User",
+            "password": "Password"
+        },
+        "placeholder": {
+            "name": "Name of this Node"
+        },
+        "tip": "",
+        "status": {
+            "authorized": "authorized",
+            "unauthorized": "unauthorized",
+            "not-logged-in": "not logged in",
+            "logout-failed": "logout failed"
+        },
+        "errors": {
+        }
+    }
+}
+
+

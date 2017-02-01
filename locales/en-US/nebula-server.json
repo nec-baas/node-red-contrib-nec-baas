@@ -1,0 +1,22 @@
+{
+    "nebula": {
+        "label": {
+            "tenant":"Tenant ID",
+            "app-id": "App ID",
+            "app-key": "App Key",
+            "base-uri": "Base URI"
+        },
+        "placeholder": {
+            "base-uri": "http://aaa.bbb.ccc/api"
+        },
+        "tip": "",
+        "status": {
+            "authorized": "authorized",
+            "unauthorized": "unauthorized",
+            "not-logged-in": "not logged in",
+            "logout-failed": "logout failed"
+        },
+        "errors": {
+        }
+    }
+}

@@ -1,0 +1,41 @@
+{
+    "nebula": {
+        "label": {
+            "name":"Name",
+            "bucket-name": "Bucket Name",
+            "clause": "Clause",
+            "get-all-objects": "Use Search conditions?",
+            "coupled-with": "coupled with",
+            "conditions": "conditions",
+            "sort": "Sort",
+            "skipCount": "Skip Count",
+            "limit": "Upper Limit",
+            "projection": "Projection",
+            "action": "Action",
+            "create-bucket": "Create bucket if it doesn't exist?"
+        },
+        "action": {
+            "save-object": "save object",
+            "delete-object": "delete object",
+            "delete-all-objects": "delete all objects",
+            "delete-bucket": "delete bucket"
+        },
+        "sort": {
+            "asc": "ASC",
+            "desc": "DESC"
+        },
+        "placeholder": {
+            "name": "Name of this Node",
+            "skipCount": "0",
+            "limit": "100",
+            "projection": "{\"name\":1}"
+        },
+        "tip": "",
+        "status": {
+        },
+        "errors": {
+            "no-such-bucket":"No such bucket",
+            "object-not-found":"Object not found"
+        }
+    }
+}

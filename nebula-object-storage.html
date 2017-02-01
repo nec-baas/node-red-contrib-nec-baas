@@ -33,58 +33,78 @@
 
 <script type="text/x-red" data-template-name="object in">
     <div class="form-row">
-        <label for="node-input-name"><i class="fa fa-tag"></i> Name</label>
-        <input type="text" id="node-input-name">
-    </div>
-    <div class="form-row">
-        <label for="node-input-bucketName"><i class="fa fa-tag"></i> Bucket Name</label>
+        <label for="node-input-bucketName"><i class="fa fa-tag"></i> <span data-i18n="nebula.label.bucket-name"></span></label>
         <input type="text" id="node-input-bucketName">
     </div>  
     <div class="form-row">
-        <label><i class="fa fa-check"></i> Clause</label>
-        <input type="checkbox" id="node-input-noClause" style="display: inline-block; width: auto; vertical-align: top;">
-        &nbsp;Get all objects?
+        <label><i class="fa fa-check"></i> <span data-i18n="nebula.label.clause"></span></label>
+        <input type="checkbox" id="node-input-isClause" style="display: inline-block; width: auto; vertical-align: top;">
+        &nbsp; <span data-i18n="nebula.label.get-all-objects"></span>
     </div>
     <div class="form-row node-input-rule-container-row">
         <ol id="node-input-rule-container"></ol>
     </div>
     <div class="form-row node-input-operator">
-        coupled with
+        <span data-i18n="nebula.label.coupled-with"></span>
         <select id="node-input-operator" style="width:70px; margin-right:5px;">
             <option value="OR">OR</option>
             <option value="AND">AND</option>
         </select>
-        conditions
+        <span data-i18n="nebula.label.conditions"></span>
     </div>
     <div class="form-row">
-        <label><i class="fa fa-check"></i> Sort</label>
+        <label><i class="fa fa-wrench"></i> <span data-i18n="nebula.label.sort"></span></label>
         <input type="text" id="node-input-sortKey" style="width: 100px">
         <select type="text" id="node-input-sortType" style="width: 100px">
-            <option value="ASC">ASC</option>
-            <option value="DESC">DESC</option>
+            <option value="ASC" data-i18n="nebula.sort.asc"></option>
+            <option value="DESC" data-i18n="nebula.sort.desc"></option>
     </select>
     </div>
     <div class="form-row">
-        <label for="node-input-projection"><i class="fa fa-check"></i> Projection</label>
-        <input type="text" id="node-input-projection">
+        <label for="node-input-skipCount"><i class="fa fa-wrench"></i> <span data-i18n="nebula.label.skipCount"></span></label>
+        <input type="text" id="node-input-skipCount" data-i18n="[placeholder]nebula.placeholder.skipCount">
     </div>  
+    <div class="form-row">
+        <label for="node-input-limit"><i class="fa fa-wrench"></i> <span data-i18n="nebula.label.limit"></span></label>
+        <input type="text" id="node-input-limit" data-i18n="[placeholder]nebula.placeholder.limit">
+    </div>  
+    <div class="form-row">
+        <label for="node-input-projection"><i class="fa fa-wrench"></i> <span data-i18n="nebula.label.projection"></span></label>
+        <input type="text" id="node-input-projection" data-i18n="[placeholder]nebula.placeholder.projection">
+    </div>  
+    <div class="form-row">
+        <label for="node-input-name"><i class="fa fa-tag"></i> <span data-i18n="nebula.label.name"></span></label>
+        <input type="text" id="node-input-name" data-i18n="[placeholder]nebula.placeholder.name">
+    </div>
     
     <script>
-        $("#node-input-noClause").change(function() {
-            if ($("#node-input-noClause").prop("checked")) {
+        $("#node-input-isClause").change(function() {
+            if ($("#node-input-isClause").prop("checked")) {
+                $("#dialog-form>div.node-input-rule-container-row").show();
+                $("#node-input-rule-container").editableList('width', 400); // resize 'valueField.typedInput'
+                $(".node-input-operator").show();
+            } else {
                 $("#dialog-form>div.node-input-rule-container-row").hide();
                 $(".node-input-operator").hide();
-            } else {
-                $("#dialog-form>div.node-input-rule-container-row").show();
-                $(".node-input-operator").show();
             }
         });
     </script>
 </script>
 
 <script type="text/x-red" data-help-name="object in">
-    <p>Reads objects from the Nebula Server and sends the content as <code>msg.payload</code>.
+    <p>Reads objects from the NES BaaS Server and sends the objects as <code>msg.payload</code>.
+
+
+    <h4>Incoming messages</h4>
+
+    <p>Set the Bucket Name in the edit dialog. If left blank it should be set 
+       by <code>msg.bucketname</code> on the incoming message.</p>
        
+       
+    <h4>Sending messages</h4>
+    <p>The function returns the messages<code>msg.result</code>,<code>msg.payload</code> to pass on to the next nodes
+    in the flow.</p>
+    
     <p>For example, <code>msg.payload</code> contains array object:
     <pre>
 [
@@ -95,39 +115,36 @@
 ]
     </pre>
     
-    <h4>Incoming messages</h4>
-    <code>msg.payload</code> contains object info.
-
-    <p>The bucketname can be configured in the node. If left blank it should be set 
-       by <code>msg.bucketname</code> on the incoming message.</p>
-       
-    <h4>Sending messages</h4>
-    <p>The function returns the messages<code>msg.result</code>,<code>msg.payload</code> to pass on to the next nodes
-    in the flow.</p>
+    <h4>Search conditions</h4>
+    <p>Set the search condition in the edit dialog.　If the key is blank, the row be ignored.
+    </p>
     
-    <h4>Search query condition</h4>
-    <p>Set the search query condition in the edit dialog.　If the key is blank, the row be ignored.
+    <h4>Upper Limit</h4>
+    <p>Set the maximum number of objects to get.　If the key is blank or '-1', get all objects.
     </p>
 
-    <p>If the provision is used, it should be set in JSON format as follows:
+    <h4>Projection</h4>
+    <p>If the Projection is used, it should be set in JSON format as follows. The Projection cannot have a mix of inclusion and exclusion.
     <pre>
-{"name":1, "time":1, "_id":0, ...}
+{"name":1, "time":1, ...}
     </pre>
     
 </script>
 
 <script type="text/javascript">
     RED.nodes.registerType('object in', {
-        color:"#c0deed", //"#fdd0a2",
+        color:"#c0deed",
         category: 'nec baas',
         defaults: {
             name: { value:"object"},
             bucketName: { value: ""},
-            noClause: { value: false},
+            isClause: { value: false},
             rules: { value:[{t:"eq", v:""}]}, 
             operator: { value: "AND"},           
             sortKey: { value: ""},
             sortType: { value: "ASC"},
+            skipCount: { value: 0},
+            limit: { value: 100},
             projection: { value: ""}
         },
         inputs:1,
@@ -155,7 +172,7 @@
                 {v:0,t:"false"}
             ];
             
-            var caseLabel = this._("switch.ignorecase");
+            var caseLabel = "ignore case";
 
             function resizeRule(rule) {
                 var newWidth = rule.width();
@@ -182,7 +199,7 @@
 
             $("#node-input-rule-container").css('min-height','180px').css('min-width','450px').editableList({
                 addItem: function(container,i,opt) {
-                    if (i > 2) { // max 3 Items
+                    if (i > 4) { // max 5 Items
                         $("#node-input-rule-container").editableList('removeItem',opt);
                         return;
                     }
@@ -307,31 +324,30 @@
 
 <script type="text/x-red" data-template-name="object out">
     <div class="form-row">
-        <label for="node-input-bucketName"><i class="fa fa-tag"></i> Bucket Name</label>
+        <label for="node-input-bucketName"><i class="fa fa-tag"></i> <span data-i18n="nebula.label.bucket-name"></span></label>
         <input type="text" id="node-input-bucketName">
     </div>
     
     <div class="form-row">
-        <label for="node-input-action"><i class="fa fa-wrench"></i> Action</label>
+        <label for="node-input-action"><i class="fa fa-wrench"></i> <span data-i18n="nebula.label.action"></span></label>
         <select type="text" id="node-input-action">
-            <option value="SAVE_OBJECT">save object</option>
-            <option value="DEL_OBJECT">delete all objects</option>
-            <option value="DEL_BUCKET">delete bucket</option>
+            <option value="SAVE_OBJECT" data-i18n="nebula.action.save-object"></option>
+            <option value="DEL_OBJECT" data-i18n="nebula.action.delete-object"></option>
+            <option value="DEL_ALL_OBJECTS" data-i18n="nebula.action.delete-all-objects"></option>
+            <option value="DEL_BUCKET" data-i18n="nebula.action.delete-bucket"></option>
         </select>
     </div>
     
     <div class="form-row node-input-createBucket">
         <label>&nbsp;</label>
         <input type="checkbox" id="node-input-createBucket" style="display: inline-block; width: auto; vertical-align: top;">
-        <label for="node-input-createBucket" style="width: 70%;"> Create bucket if it doesn't exist?</label>
+        <label for="node-input-createBucket" style="width: 70%;"> <span data-i18n="nebula.label.create-bucket"></span></label>
     </div>
 
     <div class="form-row">
-        <label for="node-input-name"><i class="fa fa-tag"></i> Name</label>
-        <input type="text" id="node-input-name">
+        <label for="node-input-name"><i class="fa fa-tag"></i> <span data-i18n="nebula.label.name"></span></label>
+        <input type="text" id="node-input-name" data-i18n="[placeholder]nebula.placeholder.name">
     </div>
-
-    <div class="form-tips"><span data-i18n="function.tip"></span></div>
 
     <script>
         $("#node-input-action").change(function() {
@@ -346,20 +362,23 @@
 </script>
 
 <script type="text/x-red" data-help-name="object out">
-    <p>Writes <code>msg.payload</code> to the Nebula Server.
-
-    <p>Deletes all objects from the bucket specified.
-    
-    <p>Deletes the bucket specified. This operation requires <B>the master key</B>.
-        
+    <p>Writes <code>msg.payload</code> to the NEC BaaS Server.
+    <p>Deletes object/objects from the bucket specified.
+    <p>Deletes the bucket specified. (This operation requires <B>the master key</B>.)
+          
     <h4>Incoming messages</h4>
-    <code>msg.payload</code> contains object info.
-    
-    <p>The bucketname can be configured in the node. If left blank it should be set 
+    <p>Set the Bucket Name in the edit dialog. If left blank it should be set 
        by <code>msg.bucketname</code> on the incoming message.</p>
-       
+    
+    <p>The 'save object' operation uses the <code>msg.payload</code> containing object info.
+    <pre>
+{"name":"foo", ...}
+    </pre>
+    
+    <p>The 'delete object' operation uses the <code>msg.objectId</code>　containing object id(uuid).
+
     <h4>Sending messages</h4>
-    <p>The function returns the messages<code>msg.result</code>,<code>msg.payload</code> to pass on to the next nodes
+    <p>The function returns the <code>msg.result</code>,<code>msg.payload</code> to pass on to the next nodes
     in the flow.</p>
     
     <code>msg.payload</code> contains object/bucket info.
@@ -368,7 +387,7 @@
 
 <script type="text/javascript">
     RED.nodes.registerType('object out', {
-        color:"#c0deed", //"#fdd0a2",
+        color:"#c0deed",
         category: 'nec baas',
         defaults: {
             bucketName: { value: ""},

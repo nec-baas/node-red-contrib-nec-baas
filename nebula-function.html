@@ -33,19 +33,19 @@
 
 <script type="text/x-red" data-template-name="function out">
     <div class="form-row">
-        <label for="node-input-initFlag"><i class="fa fa-check"></i> Initialize?</label>
+        <label for="node-input-initFlag"><i class="fa fa-check"></i> <span data-i18n="nebula.label.initialize"></label>
         <input type="checkbox" id="node-input-initFlag" style="width: auto;">
     </div>
     <div class="form-row node-input-nebulaServer">
-        <label for="node-input-nebulaServer"><i class="fa fa-tag"></i> Config</label>
+        <label for="node-input-nebulaServer"><i class="fa fa-tag"></i> <span data-i18n="nebula.label.config"></label>
         <input type="text" id="node-input-nebulaServer">
     </div>
     <div class="form-row">
-        <label for="node-input-name"><i class="fa fa-tag"></i> Name</label>
-        <input type="text" id="node-input-name">
+        <label for="node-input-name"><i class="fa fa-tag"></i> <span data-i18n="nebula.label.name"></label>
+        <input type="text" id="node-input-name" data-i18n="[placeholder]nebula.placeholder.name">
     </div>
     <div class="form-row" style="margin-bottom: 0px;">
-        <label for="node-input-func"><i class="fa fa-wrench"></i> Function</label>
+        <label for="node-input-func"><i class="fa fa-wrench"></i> <span data-i18n="nebula.label.function"></label>
         <input type="hidden" id="node-input-func" autofocus="autofocus">
         <input type="hidden" id="node-input-noerr">
     </div>
@@ -56,7 +56,7 @@
         <label for="node-input-outputs"><i class="fa fa-random"></i> <span data-i18n="function.label.outputs"></span></label>
         <input id="node-input-outputs" style="width: 60px;" value="1">
     </div>
-    <div class="form-tips"><span data-i18n="function.tip"></span></div>
+    <!-- <div class="form-tips"><span data-i18n="function.tip"></span></div> -->
 
     <script>
         $("#node-input-initFlag").change(function() {

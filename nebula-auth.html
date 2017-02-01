@@ -33,19 +33,15 @@
 
 <script type="text/x-red" data-template-name="auth">
     <div class="form-row">
-        <label for="node-input-initFlag"><i class="fa fa-check"></i> Initialize?</label>
+        <label for="node-input-initFlag"><i class="fa fa-check"></i> <span data-i18n="nebula.label.initialize"></span></label>
         <input type="checkbox" id="node-input-initFlag" style="width: auto;">
     </div>
     <div class="form-row node-input-nebulaServer">
-        <label for="node-input-nebulaServer"><i class="fa fa-tag"></i> Config</label>
+        <label for="node-input-nebulaServer"><i class="fa fa-tag"></i> <span data-i18n="nebula.label.config"></span></label>
         <input type="text" id="node-input-nebulaServer">
     </div>      
     <div class="form-row">
-        <label for="node-input-name"><i class="fa fa-tag"></i> Name</label>
-        <input type="text" id="node-input-name">
-    </div>
-    <div class="form-row">
-        <label for="node-input-action"><i class="fa fa-wrench"></i> Action</label>
+        <label for="node-input-action"><i class="fa fa-wrench"></i> <span data-i18n="nebula.label.action"></span></label>
         <select type="text" id="node-input-action">
             <option value="LOGIN">login</option>
             <option value="LOGOUT">logout</option>
@@ -53,20 +49,24 @@
     </div>    
     <div class="form-row node-input-userInfo">
         <div class="form-row">
-            <label for="node-input-email"><i class="fa fa-envelope"></i> Email</label>
+            <label for="node-input-email"><i class="fa fa-envelope"></i> <span data-i18n="nebula.label.email"></span></label>
             <input type="text" id="node-input-email">
         </div>
         <div class="form-row">
-            <label for="node-input-userName"><i class="fa fa-user"></i> User</label>
+            <label for="node-input-userName"><i class="fa fa-user"></i> <span data-i18n="nebula.label.user"></span></label>
             <input type="text" id="node-input-userName">
         </div>
         <div class="form-row">
-            <label for="node-input-password"><i class="fa fa-lock"></i> Password</label>
+            <label for="node-input-password"><i class="fa fa-lock"></i> <span data-i18n="nebula.label.password"></span></label>
             <input type="password" id="node-input-password">
         </div>
     </div>
+    <div class="form-row">
+        <label for="node-input-name"><i class="fa fa-tag"></i> <span data-i18n="nebula.label.name"></span></label>
+        <input type="text" id="node-input-name" data-i18n="[placeholder]nebula.placeholder.name">
+    </div>
     
-    <div class="form-tips"><span data-i18n="function.tip"></span></div>
+    <!-- <div class="form-tips"><span data-i18n="nebula.tip"></span></div>　-->
     
     <script>
         $("#node-input-initFlag").change(function() {
@@ -92,7 +92,7 @@
     <p>A function that authenticates to the Nebula Server.</p>
 
     <h4>Incomming messages</h4>
-    <p>username(email) and password can be configured in the node. If left blank it should be set 
+    <p>Set the email (or username) and password in the edit dialog. If left blank it should be set 
        by <code>msg.email</code>,<code>msg.username</code>,<code>msg.password</code> on the incoming message.</p>
        
     <h4>Sending messages</h4>

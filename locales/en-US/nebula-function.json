@@ -1,0 +1,20 @@
+{
+    "nebula": {
+        "label": {
+            "name": "Name",
+            "initialize":"Initialize?",
+            "config": "Config",
+            "function": "Function"
+        },
+        "placeholder": {
+            "name": "Name of this Node"
+        },
+        "tip": "",
+        "status": {
+        },
+        "errors": {
+        }
+    }
+}
+
+

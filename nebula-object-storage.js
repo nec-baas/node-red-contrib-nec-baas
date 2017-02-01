@@ -33,6 +33,7 @@
  
 module.exports = function(RED) {
     "use strict";
+    const Common = require('./nebula-common');
     
     function createClause(selectType, key, value, option, nb, node) {
         var clause = null;
@@ -81,40 +82,21 @@ module.exports = function(RED) {
     function joinClause(operator, array, size, nb, node) {
         var clause = null;
         
-        if(size==0 || !array) {
+        if(size === 0 || !array) {
             return clause;
         }        
+        
+        if(size === 1) {
+            clause = array[0];
+            return clause;
+        }   
                 
         if (operator === "AND") {
-            switch (size) {
-            case 1:
-                clause = array[0]; // Use "and" operator once
-                break;
-            case 2:
-                clause = nb.Clause.and(array[0], array[1]); // Use "and" operator twice
-                break;
-            case 3:
-                clause = nb.Clause.and(array[0], array[1], array[2]); // Use "and" operator three times
-                break;
-            default:
-                break;
-            }
-        
+            clause = nb.Clause.and.apply(this, array);
         } else { // OR
-            switch (size) {
-            case 1:
-                clause = array[0]; // Use "and" operator once
-                break;
-            case 2:
-                clause = nb.Clause.or(array[0], array[1]); // Use "and" operator twice
-                break;
-            case 3:
-                clause = nb.Clause.or(array[0], array[1], array[2]); // Use "and" operator three times
-                break;
-            default:
-                break;
-            }
+            clause = nb.Clause.or.apply(this, array);
         }
+
         return clause;
     }
     
@@ -146,10 +128,12 @@ module.exports = function(RED) {
             }
         }
         
-        var noClause = n.noClause;
+        var isClause = n.isClause;
         var operator = n.operator;
         var sortKey = n.sortKey;
         var sortType = n.sortType;
+        var skipCount = n.skipCount;
+        var limit = n.limit;
         var projection = n.projection;
         
         this.on('input', function(msg) {
@@ -159,20 +143,20 @@ module.exports = function(RED) {
             try {
                 // Use the value of 'msg.bucketname' if the 'msg.bucketname' has a backet name.
                 var bucketName = msg.bucketname ? msg.bucketname : nebulaBucketName;
-                if (bucketName == null) { // null or 'undefined'
-                    node.error("Bucketname is null");
-                    return;
+                if (!bucketName) { // null or 'undefined'
+                    throw("Invalid bucketname");
                 }
 
                 var bucket = new Nebula.ObjectBucket(bucketName); 
                 var query = new Nebula.ObjectQuery();
                 query.setLimit(-1);
  
-                // Use clause
-                if (!noClause) {　
-                    var clauseArray = new Array(3);
+                // Enable clause
+                if (isClause) {
+                    var rulenum = node.rules.length;
+                    var clauseArray = new Array(rulenum);
                     var validCount = 0;
-                    for (var i=0; i < node.rules.length; i++) {
+                    for (var i=0; i < rulenum; i++) {
                         var rule = node.rules[i];
                         var key = rule.k;
                         var selectType = rule.t;
@@ -184,11 +168,10 @@ module.exports = function(RED) {
                         }
                         // Convert msg.payload to value.
                         var evaluatedValue = RED.util.evaluateNodeProperty(value, inputType, node, msg); 
-                        var inputType = rule.vt;
                         
                         var tmp = createClause(selectType, key, evaluatedValue, caseFlag, Nebula, node);
                         if (tmp == null) {　// Skip the clause if the key is null.
-                            node.warn("Clause argument is Invalid (selectType, key, etc.)");
+                            node.warn("Clause property is Invalid (selectType, key, etc.)");
                         } else {
                             clauseArray[validCount] = tmp;
                             validCount++;
@@ -212,28 +195,44 @@ module.exports = function(RED) {
                         query.setSortOrder(sortKey, false);
                     }
                 }
+
+                if (skipCount) {
+                    var value = RED.util.evaluateNodeProperty(skipCount, 'num', node, msg); 
+                    query.setSkipCount(value);
+                }
+
+                if (limit) {
+                    var value = RED.util.evaluateNodeProperty(limit, 'num', node, msg); 
+                    query.setLimit(value);
+                } else {
+                    query.setLimit(100);
+                }
+                
                 if (projection) {
-                    var tmpProjection = JSON.parse(projection);
-                    var evalProjection = {};
-                    
-                    for (var i = 0, a = Object.keys(tmpProjection); i < a.length; i++) {
-                        var key = a[i];
-                        var strvalue = tmpProjection[key];
-                        // Convert string to number.
-                        var numValue = RED.util.evaluateNodeProperty(strvalue, 'num', node, null); 
-                        evalProjection[key] = numValue;
-                    }
+                    try {
+                        var tmpProjection = JSON.parse(projection);
+                        var evalProjection = {};
+                        
+                        for (var key in tmpProjection) {
+                            var strValue = tmpProjection[key];
+                            // Convert string to number.
+                            var numValue = RED.util.evaluateNodeProperty(strValue, 'num', node, null); 
+                            evalProjection[key] = numValue;
+                        }
+                    } catch(err) {
+                        throw "Invalid 'projection'. Check the json format.";                    
+                    }               
+
                     query.setProjection(evalProjection);
                 }
-  
                 //node.log("query: " + JSON.stringify(query));
-                
+
                 bucket.query(query)
                     .then(function(obj) {
-                        node.send({result: "ok", payload: obj});
+                        Common.sendMessage(node, "ok", obj, msg);
                     })
                     .catch (function(error) {
-                        node.send({result: "failed", payload: error});
+                        Common.sendMessage(node, "failed", error, msg);
                     });
             } catch(err) {
                 node.warn(err);
@@ -259,10 +258,11 @@ module.exports = function(RED) {
             try {         
                 // Use the value of 'msg.bucketname' if the 'msg.bucketname' has a backet name.
                 var bucketName = msg.bucketname ? msg.bucketname : nebulaBucketName;
-                if (bucketName == null) { // null or undefined
-                    node.error("Bucketname is null");
+                if (!bucketName) { // null or undefined
+                    throw("Invalid bucketname");
                 }
-                
+                var objectId = msg.objectId ? msg.objectId : null;
+                                
                 var bucket = new Nebula.ObjectBucket(bucketName);
                 //bucket.setAcl(new Nebula.Acl());
                 //bucket.setContentAcl(new Nebula.Acl());
@@ -272,54 +272,66 @@ module.exports = function(RED) {
                     .catch((err) => {
                         if (createBucket) {
                             // Create a bucket if no bucket exists.
+                            node.warn("A new bucket('" + bucketName + "') is created");
                             return bucket.saveBucket();
                         } else {
-                            node.error("Bucket not found", msg);
-                            return;
+                            throw RED._("nebula.errors.no-such-bucket");
                         }
                     })
                     .then(() => {
                         return bucket.save(msg.payload);
                     })
                     .then(function(obj) {
-                        node.send({result: "ok", payload: obj});
+                        Common.sendMessage(node, "ok", obj, msg);
                     })
                     .catch(function (error) {
-                        node.send({result: "failed", payload: error});
+                        Common.sendMessage(node, "failed", error, msg);
                     });
-                } else if (action === "DEL_OBJECT") { // DELETE
+                } else if (action === "DEL_OBJECT") {
+                    
+                    node.log("objectId: " + objectId);
+                    bucket.remove(objectId)
+                    .then(function(objid) {
+                        Common.sendMessage(node, "ok", objid, msg);
+                    })
+                    .catch(function(error) {
+                        Common.sendMessage(node, "failed", error, msg);
+                    });
+                    
+                } else if (action === "DEL_ALL_OBJECTS") { 
                     // Query all objects.
                     var query = new Nebula.ObjectQuery();
                     query.setLimit(-1);
-                    
                     bucket.query(query)
                     .then(function(objects) {
                         var length = objects.length;
-                        //node.log("query: object size: " +  length);
-                        node.send({result: "ok", payload: objects});
+                        if (length == 0) {
+                            throw RED._("nebula.errors.object-not-found");
+                        }
+
                         // Delete all objects.
                         for (var i=0; i<length; i++) {
-                            var objectId = objects[i]["_id"];
-                            node.log("objectId: " + objectId);
-                            bucket.remove(objectId)
+                            var id = objects[i]["_id"];
+                            //node.log("objectId: " + id);
+                            bucket.remove(id)
                             .then(function(objid) {
-                                node.send({result: "ok", payload: objid});
+                                Common.sendMessage(node, "ok", objid, msg);
                             })
                             .catch(function(error) {
-                                node.send({result: "failed", payload: error});
+                                Common.sendMessage(node, "failed", error, msg);
                             });
                         }
                     })
                     .catch(function(error) {
-                        node.send({result: "failed", payload: error});
+                        Common.sendMessage(node, "failed", error, msg);
                     });
-                } else if (action === "DEL_BUCKET") { // DELETE
+                } else if (action === "DEL_BUCKET") {
                     bucket.deleteBucket()
                     .then(function(obj) {
-                        node.send({result: "ok", payload: bucket});
+                        Common.sendMessage(node, "ok", obj, msg);
                     })
                     .catch(function (error) {
-                        node.send({result: "failed", payload: error});
+                        Common.sendMessage(node, "failed", error, msg);
                     });
                 } else {
                     // do nothing.

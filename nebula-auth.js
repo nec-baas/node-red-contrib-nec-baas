@@ -57,7 +57,7 @@ module.exports = function(RED) {
             node.warn(err);
         }
 
-        node.status({fill: "red", shape: "ring", text: "not logged in"});
+        node.status({fill: "red", shape: "ring", text: RED._("nebula.status.not-logged-in")});
         
         this.on('input', function(msg) {
             var Nebula = this.context().flow.get('Nebula');
@@ -76,22 +76,22 @@ module.exports = function(RED) {
 
                     Nebula.User.login(userInfo)
                         .then(function(userObj) {
-                            node.send({result: "ok", payload: userObj});
-                            node.status({fill: "green", shape: "dot", text: "authorized"});
+                            Common.sendMessage(node, "ok", userObj, msg);
+                            node.status({fill: "green", shape: "dot", text: RED._("nebula.status.authorized")});
                         })
                         .catch(function(error) {
-                            node.send({result: "failed", payload: error});
-                            node.status({fill: "red", shape: "ring", text: "unauthorized"});
+                            Common.sendMessage(node, "failed", error, msg);
+                            node.status({fill: "red", shape: "ring", text: RED._("nebula.status.unauthorized")});
                         });
                 } else { // LOGOUT
                     Nebula.User.logout()
                         .then(function() {
-                            node.send({result: "ok"});
-                            node.status({fill: "red", shape: "ring", text: "not logged in"});
+                            Common.sendMessage(node, "ok", null, msg);
+                            node.status({fill: "red", shape: "ring", text: RED._("nebula.status.not-logged-in")});
                         })
                         .catch(function(error) {
-                            node.send({result: "failed", payload: error});
-                            node.status({fill: "red", shape: "ring", text: "logout failed"});
+                            Common.sendMessage(node, "failed", error, msg);
+                            node.status({fill: "red", shape: "ring", text: RED._("nebula.status.logout-failed")});
                         });
                 }
             } catch(err) {
