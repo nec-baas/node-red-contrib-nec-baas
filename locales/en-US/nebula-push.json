@@ -1,0 +1,33 @@
+{
+    "nebula": {
+        "label": {
+            "name":"Name",
+            "channels": "Channels",
+            "receivers": "Receivers",
+            "message": "Message",
+            "push-type": "Push Type",
+            "gcm": "GCM",
+            "apns": "APNS",
+            "sse": "SSE",
+            "gcm-title": "Title",
+            "gcm-uri": "URI",
+            "apns-badge": "Badge Count",
+            "apns-category": "Category",
+            "apns-sound": "Sound File",
+            "sse-event-id": "Event ID",
+            "sse-event-type": "Event Type"
+        },
+        "placeholder": {
+            "name": "Name of this Node",
+            "channels": "comma-separated words (channel, ...)",
+            "receivers": "comma-separated words (g:group, ...)"
+        },
+        "tip": "",
+        "status": {
+        },
+        "errors": {
+            "message-not-found":"Message is Required"
+        }
+    }
+}
+

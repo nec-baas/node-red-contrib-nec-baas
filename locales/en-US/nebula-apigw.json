@@ -1,0 +1,29 @@
+{
+    "nebula": {
+        "label": {
+            "name":"Name",
+            "apiname": "API Name",
+            "method": "Method",
+            "subpath": "Subpath",
+            "apidata": "API Data",
+            "response": "Response",
+            "binaryResp": "Use Binary Response?",
+            "headers": "Headers",
+            "addHeaders": "Add Headers?",
+            "clearHeaders": "Clear Headers?",
+            "contentType": "content-Type"            
+        },
+        "placeholder": {
+            "name": "Name of this Node",
+            "apidata": "{\"name\":\"foo\"}",
+            "contentType": "text/html"
+        },
+        "tip": "",
+        "status": {
+        },
+        "errors": {
+            "invalid-apidata":"Invalid 'API Data'. Check the json format."
+        }
+    }
+}
+

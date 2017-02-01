@@ -76,6 +76,25 @@ class Common {
         }
         return proxy;
     }
+
+    static csv2json(csv){
+        var array = [];
+        var values = csv.split(',');
+
+        for (var i=0; i<values.length; i++) {
+            var value = values[i].trim();
+            if (value) {
+                array.push(value);
+            }
+        }
+        return array;
+    }
+    
+    static sendMessage(node, result, payload, msg){  
+        msg.payload = payload;
+        msg.result = result;
+        node.send(msg);
+    }
 }
 
 module.exports = Common;

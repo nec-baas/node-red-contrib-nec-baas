@@ -1,0 +1,236 @@
+<!--
+  NEC Mobile Backend Platform
+
+  Copyright (c) 2014-2016 NEC Corporation
+
+  Licensed under the Apache License, Version 2.0 (the "License");
+  you may not use this file except in compliance with the License.
+  You may obtain a copy of the License at
+
+  http://www.apache.org/licenses/LICENSE-2.0
+
+  Unless required by applicable law or agreed to in writing, software
+  distributed under the License is distributed on an "AS IS" BASIS,
+  WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+  See the License for the specific language governing permissions and
+  limitations under the License.
+-->
+
+<script type="text/x-red" data-template-name="apigw out">
+    <div class="form-row">
+        <label for="node-input-apiname"><i class="fa fa-wrench"></i> <span data-i18n="nebula.label.apiname"></span></label>
+        <input type="text" id="node-input-apiname">
+    </div>
+    <div class="form-row">
+        <label for="node-input-method"><i class="fa fa-tasks"></i> <span data-i18n="nebula.label.method"></span></label>
+        <select type="text" id="node-input-method" style="width:70%;">
+        <option value="GET">GET</option>
+        <option value="POST">POST</option>
+        <option value="PUT">PUT</option>
+        <option value="DELETE">DELETE</option>
+        </select>
+    </div>
+    <div class="form-row">
+        <label for="node-input-subpath"><i class="fa fa-globe"></i> <span data-i18n="nebula.label.subpath"></span></label>
+        <input type="text" id="node-input-subpath">
+    </div>
+    <div class="form-row">
+        <label for="node-input-apidata"><i class="fa fa-wrench"></i> <span data-i18n="nebula.label.apidata"></span></label>
+        <input type="text" id="node-input-apidata" data-i18n="[placeholder]nebula.placeholder.apidata">
+    </div>
+    <div class="form-row">
+        <label for="node-input-isBinaryResponse"><i class="fa fa-check"></i> <span data-i18n="nebula.label.response"></span></label>
+        <input type="checkbox" id="node-input-isBinaryResponse" style="width: auto;">
+        &nbsp;Use Binary Response?
+    </div>
+    <div class="form-row">
+        <label for="node-input-isAddHeaders"><i class="fa fa-check"></i> <span data-i18n="nebula.label.headers"></span></label>
+        <input type="checkbox" id="node-input-isAddHeaders" style="display: inline-block; width: auto; vertical-align: top;">
+        &nbsp; <span data-i18n="nebula.label.addHeaders"></span> &emsp;
+        <input type="checkbox" id="node-input-isClearHeaders" style="display: inline-block; width: auto; vertical-align: top;">
+        &nbsp; <span data-i18n="nebula.label.clearHeaders"></span>
+    </div>
+    <div class="form-row node-input-rule-container-row">
+        <ol id="node-input-rule-container"></ol>
+    </div>
+    <div class="form-row">
+        <label for="node-input-contentType"><i class="fa fa-wrench"></i> Content-Type</label>
+        <input type="text" id="node-input-contentType" data-i18n="[placeholder]nebula.placeholder.contentType">
+    </div>
+    <div class="form-row">
+        <label for="node-input-name"><i class="fa fa-tag"></i> <span data-i18n="nebula.label.name"></span></span></label>
+        <input type="text" id="node-input-name" data-i18n="[placeholder]nebula.placeholder.name">
+    </div>
+    
+    <script>
+        $("#node-input-isAddHeaders").change(function() {
+            if ($("#node-input-isAddHeaders").prop("checked")) {
+                $("#node-input-isClearHeaders").prop("checked", false);
+                $("#dialog-form>div.node-input-rule-container-row").show();
+                $("#node-input-rule-container").editableList('width', 400); // resize 'valueField.typedInput'
+            } else {
+                $("#dialog-form>div.node-input-rule-container-row").hide();
+            }
+        });
+        
+        $("#node-input-isClearHeaders").change(function() {
+            if ($("#node-input-isClearHeaders").prop("checked")) {
+                $("#node-input-isAddHeaders").prop("checked", false);
+                $("#dialog-form>div.node-input-rule-container-row").hide();
+            } else {
+                // do nothing;
+            }
+        });
+        
+    </script>
+</script>
+
+<script type="text/x-red" data-help-name="apigw out">
+    <p>Execute registered APIs.</p>
+       
+    <h4>Incoming messages</h4>
+
+    <h4>API properties</h4>
+    <p>Set the API properties in the edit dialog. If left blank, it should be set the following properties
+       on the incoming message.</p>
+    <pre>
+    msg.apiname = "hello";
+    msg.method = "GET";
+    msg.subpath = "sayHello";
+    msg.apidata = {"name":"foo"};
+    </pre>
+    
+    <h4>Header</h4>
+    <p>Set the Header properties in the edit dialog, or it can be set by the following properties
+       on the incoming message. If the 'Clear' is checked, Clear headers except for 'Content-Type'.</p>
+    <pre>
+    msg.header = {
+        addHeaders: {"header1":"aaa", "header2":"bbb", ...},
+        isClearHeaders: false,
+        contentType: "text/html"
+    }
+    </pre>
+
+    <h4>Response</h4>
+    <p>Set the Response property in the edit dialog, or it can be set by the following property
+       on the incoming message. If the 'Response' is checked, the registered API returns binary data.</p>
+    <pre>
+    msg.isBinaryResponse = false;
+    </pre>
+    
+    <h4>Sending messages</h4>
+    <p>The function returns the <code>msg.result</code>,<code>msg.payload</code> to pass on to the next nodes
+    in the flow.</p>
+    
+</script>
+
+<script type="text/javascript">
+    RED.nodes.registerType('apigw out', {
+        color:"#c0deed",
+        category: 'nec baas',
+        defaults: {
+            name: { value:"apigw"},
+            apiname: { value: ""},
+            method: { value: ""},
+            subpath: { value: ""},
+            apidata: { value: ""},
+            
+            isBinaryResponse: { value: false},
+            isAddHeaders: { value: false},
+            rules: { value:[{v:""}]},
+            isClearHeaders: { value: false},
+            contentType: { value: ""}
+        },
+        inputs:1,
+        outputs:1,
+        icon: "arrow-out.png",
+        align: 'right',
+        label: function() {
+            return this.name;
+        },
+        oneditprepare: function() {
+            var node = this;
+
+            function resizeRule(rule) {
+                var newWidth = rule.width();
+                var keyField = rule.find(".node-input-rule-key");
+                var valueField = rule.find(".node-input-rule-value");
+
+                if (newWidth == 0) { // editor hide -> show
+                    newWidth = 400;
+                }
+                keyField.width(100);
+                valueField.typedInput("width",(newWidth-150));
+            }
+
+            $("#node-input-rule-container").css('min-height','180px').css('min-width','450px').editableList({
+                addItem: function(container,i,opt) {
+                    if (i > 9) { // max 10 Items
+                        $("#node-input-rule-container").editableList('removeItem',opt);
+                        return;
+                    }
+                    var rule = opt;
+                    var row = $('<div/>').appendTo(container);
+
+                    var keyField = $('<input/>',{class:"node-input-rule-key",type:"text",style:"margin-left: 5px; width: 100px;"}).appendTo(row);
+                    var valueField = $('<input/>',{class:"node-input-rule-value",type:"text",style:"margin-left: 5px; width: 200px;"}).appendTo(row).typedInput({default:'str',types:['msg','flow','global','str']});
+                    
+                    keyField.val(rule.k);
+
+                    if (typeof rule.v != "undefined") {
+                        valueField.typedInput('value',rule.v);
+                        valueField.typedInput('type',rule.vt||'str');
+                    }
+                    resizeRule(container);
+                },
+                removeItem: function(opt) {
+                    var rules = $("#node-input-rule-container").editableList('items');
+                    rules.each(function(i) { $(this).find(".node-input-rule-index").html(i+1); });
+                },
+                resizeItem: resizeRule,
+                sortItems: function(rules) {
+                    var rules = $("#node-input-rule-container").editableList('items');
+                    rules.each(function(i) { $(this).find(".node-input-rule-index").html(i+1); });
+                },
+                sortable: true,
+                removable: true
+            });
+
+            for (var i=0;i<this.rules.length;i++) {
+                var rule = this.rules[i];
+                $("#node-input-rule-container").editableList('addItem',rule);
+            }
+        },
+        oneditsave: function() {
+            var rules = $("#node-input-rule-container").editableList('items');
+            var node = this;
+            node.rules= [];
+            rules.each(function(i) {
+                var rule = $(this);
+                var r = {};
+                r.k = rule.find(".node-input-rule-key").val();
+                r.v = rule.find(".node-input-rule-value").typedInput('value');
+                r.vt = rule.find(".node-input-rule-value").typedInput('type');
+
+                node.rules.push(r);
+            });
+        },
+        oneditresize: function(size) {
+            var rows = $("#dialog-form>div:not(.node-input-rule-container-row)");
+
+            var height = size.height;
+
+            if (height >= 250) { // editor max height: 250
+                height = 250;
+            }
+
+            for (var i=0;i<rows.size();i++) {
+                height -= $(rows[i]).outerHeight(true);
+            }
+            var editorRow = $("#dialog-form>div.node-input-rule-container-row");
+            height -= (parseInt(editorRow.css("marginTop"))+parseInt(editorRow.css("marginBottom")));
+            $("#node-input-rule-container").editableList('height',height);
+        }
+    });
+</script>
+

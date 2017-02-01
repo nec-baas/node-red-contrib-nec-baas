@@ -1,0 +1,191 @@
+<!--
+  NEC Mobile Backend Platform
+
+  Copyright (c) 2014-2016 NEC Corporation
+
+  Licensed under the Apache License, Version 2.0 (the "License");
+  you may not use this file except in compliance with the License.
+  You may obtain a copy of the License at
+
+  http://www.apache.org/licenses/LICENSE-2.0
+
+  Unless required by applicable law or agreed to in writing, software
+  distributed under the License is distributed on an "AS IS" BASIS,
+  WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+  See the License for the specific language governing permissions and
+  limitations under the License.
+-->
+
+<script type="text/x-red" data-template-name="push out">
+    <div class="form-row">
+        <label for="node-input-channels"><i class="fa fa-random"></i> <span data-i18n="nebula.label.channels"></span></label>
+        <input type="text" id="node-input-channels" data-i18n="[placeholder]nebula.placeholder.channels">
+    </div>  
+    <div class="form-row">
+        <label for="node-input-receivers"><i class="fa fa-user"></i> <span data-i18n="nebula.label.receivers"></span></label>
+        <input type="text" id="node-input-receivers" data-i18n="[placeholder]nebula.placeholder.receivers">
+    </div>  
+    <div class="form-row">
+        <label for="node-input-message"><i class="fa fa-envelope"></i> <span data-i18n="nebula.label.message"></span></label>
+        <input type="text" id="node-input-message">
+    </div>
+    <div class="form-row">
+        <label><i class="fa fa-check"></i> <span data-i18n="nebula.label.push-type"></span></label>
+        <input type="checkbox" id="node-input-gcm" style="width: auto;"> <span data-i18n="nebula.label.gcm"></span>　&emsp;
+        <input type="checkbox" id="node-input-apns" style="width: auto;"> <span data-i18n="nebula.label.apns"></span>　&emsp;
+        <input type="checkbox" id="node-input-sse" style="width: auto;"> <span data-i18n="nebula.label.sse"></span>
+    </div>
+    <div class="form-row node-input-push-type-gcm">
+        <label><i class="fa fa-wrench"></i> <span data-i18n="nebula.label.gcm"></span></label>
+        <div class="form-row">
+        <label></label><label> <span data-i18n="nebula.label.gcm-title"></span></label>
+        <input type="text" id="node-input-gcmTitle" style="width: auto;">
+        </div>
+        <div class="form-row">
+        <label></label><label> <span data-i18n="nebula.label.gcm-uri"></span></label>
+        <input type="text" id="node-input-gcmUri" style="width: auto;">
+        </div>
+    </div>
+    <div class="form-row node-input-push-type-apns">
+        <label><i class="fa fa-wrench"></i> <span data-i18n="nebula.label.apns"></span></label>
+        <div class="form-row">
+        <label></label><label> <span data-i18n="nebula.label.apns-badge"></span></label>
+        <input type="text" id="node-input-apnsBadge" style="width: auto;">
+        </div>
+        <div class="form-row">
+        <label></label><label> <span data-i18n="nebula.label.apns-category"></span></label>
+        <input type="text" id="node-input-apnsCategory" style="width: auto;">
+        </div>
+        <div class="form-row">
+        <label></label><label> <span data-i18n="nebula.label.apns-sound"></span></label>
+        <input type="text" id="node-input-apnsSound" style="width: auto;">
+        </div>
+    </div>
+    <div class="form-row node-input-push-type-sse">
+        <label><i class="fa fa-wrench"></i> <span data-i18n="nebula.label.sse"></label>
+        <div class="form-row">
+        <label></label><label> <span data-i18n="nebula.label.sse-event-id"></span></label>
+        <input type="text" id="node-input-sseEventId" style="width: auto;">
+        </div>
+        <div class="form-row">
+        <label></label><label> <span data-i18n="nebula.label.sse-event-type"></span></label>
+        <input type="text" id="node-input-sseEventType" style="width: auto;">
+        </div>
+    </div>
+    <div class="form-row">
+        <label for="node-input-name"><i class="fa fa-tag"></i> <span data-i18n="nebula.label.name"></span></label>
+        <input type="text" id="node-input-name" data-i18n="[placeholder]nebula.placeholder.name">
+    </div>
+    
+    <script>
+        $("#node-input-gcm").change(function() {
+            if ($("#node-input-gcm").prop("checked")) {
+                $("#dialog-form>div.node-input-push-type-gcm").show();
+            } else {
+                $("#dialog-form>div.node-input-push-type-gcm").hide();
+            }
+        });
+        
+        $("#node-input-apns").change(function() {
+            if ($("#node-input-apns").prop("checked")) {
+                $("#dialog-form>div.node-input-push-type-apns").show();
+            } else {
+                $("#dialog-form>div.node-input-push-type-apns").hide();
+            }
+        });
+        
+        $("#node-input-sse").change(function() {
+            if ($("#node-input-sse").prop("checked")) {
+                $("#dialog-form>div.node-input-push-type-sse").show();
+            } else {
+                $("#dialog-form>div.node-input-push-type-sse").hide();
+            }
+        });
+    </script>
+</script>
+
+<script type="text/x-red" data-help-name="push out">
+    <p>Send a push notification message to users' devices.</p>
+       
+    <h4>Incoming messages</h4>
+
+    <h4>Message</h4>
+    <p>Set the Message in the edit dialog. If left blank, it should be set 
+       by <code>msg.message</code> on the incoming message.The message property is mandatory.</p>
+       
+    <h4>Channels, Receivers</h4>
+    <p>Set the channels, receivers in the edit dialog, or it can be set by <code>msg.channels</code>, <code>msg.receivers</code>  on the incoming message.
+    </p>
+
+    <pre>
+msg.channels = ["channel1","channel2","channel3"];
+msg.receivers = ["user_id", "g:group1", "g:group2"];
+    </pre>
+    
+    <h4>Type</h4>
+    <p>This Push-out node supports GCM,APNS,SSE. Select the type of Push Notifications and set the push-parameters in the edit dialog. Or it can be set by <code>msg.gcm</code>,<code>msg.apns</code>,<code>msg.sse</code>.The following example sets the push-parameters. 
+    </p>
+    <pre>
+msg.gcm = {
+    enabled: true,
+    title: "title",
+    uri: "http://aaa.bbb.ccc",
+}
+
+msg.apns = {
+    enabled: true,
+    badge: "3",
+    sound: "sound.aiff",
+    category: "information",
+}
+
+msg.sse = {
+    enabled: true,
+    eventId: "event01",
+    eventType: "message",
+}
+    </pre>
+    
+    <h4>Sending messages</h4>
+    <p>The function returns the <code>msg.result</code>,<code>msg.payload</code> to pass on to the next nodes
+    in the flow.</p>
+    
+</script>
+
+<script type="text/javascript">
+    RED.nodes.registerType('push out', {
+        color:"#c0deed",
+        category: 'nec baas',
+        defaults: {
+            name: { value:"push"},
+            channels: { value: ""},
+            receivers: { value: ""},
+            message: { value: ""},
+            
+            gcm: { value: false},
+            apns: { value: false},
+            sse: { value: false},
+            
+            gcmTitle: { value: ""},
+            gcmUri: { value: ""},
+            
+            apnsBadge: { value: ""},
+            apnsCategory: { value: ""},
+            apnsSound: { value: ""},
+            
+            sseEventId: { value: ""},
+            sseEventType: { value: ""}
+        },
+        inputs:1,
+        outputs:1,
+        icon: "arrow-out.png",
+        align: 'right',
+        label: function() {
+            return this.name;
+        },
+        oneditsave: function() {
+
+        }
+    });
+</script>
+
