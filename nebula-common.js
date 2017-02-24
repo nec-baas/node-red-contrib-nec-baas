@@ -65,7 +65,7 @@ class Common {
             var proxyConfig = httpProxy ? httpProxy : httpsProxy;
 
             if (proxyConfig) {
-                var m = process.env.http_proxy.match(/^(http:\/\/)?([^:\/]+)(:([0-9]+))?/i);
+                var m = proxyConfig.match(/^(http:\/\/)?([^:\/]+)(:([0-9]+))?/i);
                 if (m && m.length >= 3) {
                     proxy = {
                         host: m[2],
