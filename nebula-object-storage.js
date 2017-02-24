@@ -253,8 +253,9 @@ module.exports = function(RED) {
 
         this.on('input', function(msg) {
             var Nebula = this.context().flow.get('Nebula');
-            //node.log("msg.payload: " + JSON.stringify(msg.payload));
-            
+            var payload = msg.payload;
+            //node.log("payload: " + JSON.stringify(payload));
+
             try {         
                 // Use the value of 'msg.bucketname' if the 'msg.bucketname' has a backet name.
                 var bucketName = msg.bucketname ? msg.bucketname : nebulaBucketName;
@@ -272,14 +273,14 @@ module.exports = function(RED) {
                     .catch((err) => {
                         if (createBucket) {
                             // Create a bucket if no bucket exists.
-                            node.warn("A new bucket('" + bucketName + "') is created");
+                            node.warn("Try to create a new bucket('" + bucketName + "') ...");
                             return bucket.saveBucket();
                         } else {
                             throw RED._("nebula.errors.no-such-bucket");
                         }
                     })
                     .then(() => {
-                        return bucket.save(msg.payload);
+                        return bucket.save(payload);
                     })
                     .then(function(obj) {
                         Common.sendMessage(node, "ok", obj, msg);
