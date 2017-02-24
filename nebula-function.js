@@ -105,6 +105,11 @@ module.exports = function(RED) {
         var sandbox = {
             console:console,
             util:util,
+            nebula:{
+                get: function() {
+                    return node.context().flow.get('Nebula');
+                }
+            },
             Buffer:Buffer,
             __node__: {
                 log: function() {
