@@ -135,6 +135,8 @@ module.exports = function(RED) {
         var skipCount = n.skipCount;
         var limit = n.limit;
         var projection = n.projection;
+        var bucket = null;
+        var oldBucketName = null;
         
         this.on('input', function(msg) {
             var Nebula = this.context().flow.get('Nebula'); 
@@ -147,7 +149,11 @@ module.exports = function(RED) {
                     throw("Invalid bucketname");
                 }
 
-                var bucket = new Nebula.ObjectBucket(bucketName); 
+                if (bucketName !== oldBucketName) {
+                    oldBucketName = bucketName;
+                    bucket = new Nebula.ObjectBucket(bucketName);
+                }
+                
                 var query = new Nebula.ObjectQuery();
                 query.setLimit(-1);
  
@@ -250,7 +256,9 @@ module.exports = function(RED) {
         var nebulaBucketName = config.bucketName;
         var createBucket = config.createBucket;
         var action = config.action;
-
+        var bucket = null;
+        var oldBucketName = null;   
+        
         this.on('input', function(msg) {
             var Nebula = this.context().flow.get('Nebula');
             var payload = msg.payload;
@@ -262,35 +270,43 @@ module.exports = function(RED) {
                 if (!bucketName) { // null or undefined
                     throw("Invalid bucketname");
                 }
+                               
                 var objectId = msg.objectId ? msg.objectId : null;
-                                
-                var bucket = new Nebula.ObjectBucket(bucketName);
-                //bucket.setAcl(new Nebula.Acl());
-                //bucket.setContentAcl(new Nebula.Acl());
-
+                      
+                if (bucketName !== oldBucketName) {
+                    oldBucketName = bucketName;
+                    bucket = new Nebula.ObjectBucket(bucketName);
+                }
+                
                 if (action === "SAVE_OBJECT") { 
-                    Nebula.ObjectBucket.loadBucket(bucketName)
-                    .catch((err) => {
-                        if (createBucket) {
-                            // Create a bucket if no bucket exists.
-                            node.warn("Try to create a new bucket('" + bucketName + "') ...");
-                            return bucket.saveBucket();
-                        } else {
-                            throw RED._("nebula.errors.no-such-bucket");
-                        }
-                    })
-                    .then(() => {
-                        return bucket.save(payload);
-                    })
+    
+                    bucket.save(payload)
                     .then(function(obj) {
                         Common.sendMessage(node, "ok", obj, msg);
                     })
-                    .catch(function (error) {
+                    .catch(function (error) {                            
+                        if (error.status === 404 && error.responseText === "{\"error\":\"No such bucket\"}") {
+                            if (createBucket) {
+                                // Create a bucket if no bucket exists.
+                                node.warn("Try to create a new bucket('" + bucketName + "') ...");
+                                bucket = new Nebula.ObjectBucket(bucketName); // Set new bucketName
+                                bucket.saveBucket()
+                                .then(function() {
+                                    node.warn("Succeeded in creating a new bucket.");
+                                })
+                                .catch(function(error) {
+                                    node.error("Failed to create a new bucket.");
+                                });
+                            } else {
+                                throw RED._("nebula.errors.no-such-bucket");
+                            }
+                        }
                         Common.sendMessage(node, "failed", error, msg);
                     });
+
                 } else if (action === "DEL_OBJECT") {
                     
-                    node.log("objectId: " + objectId);
+                    //node.log("objectId: " + objectId);
                     bucket.remove(objectId)
                     .then(function(objid) {
                         Common.sendMessage(node, "ok", objid, msg);
