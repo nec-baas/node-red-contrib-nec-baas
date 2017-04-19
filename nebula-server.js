@@ -15,16 +15,16 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
- 
-module.exports = function(RED) {
+
+module.exports = function (RED) {
     'use restrict';
 
     function NebulaServerNode(config) {
-    
+
         RED.nodes.createNode(this, config);
         var credentials = this.credentials;
-        var node = this; 
-        
+        var node = this;
+
         if (credentials) {
             node.nebulaConfig = {
                 tenant: config.tenantId,
@@ -41,8 +41,8 @@ module.exports = function(RED) {
 
     RED.nodes.registerType('nebula-server', NebulaServerNode, {
         credentials: {
-            appId: {type:"text"},
-            appKey: {type:"text"}
+            appId: {type: "text"},
+            appKey: {type: "text"}
         }
     });
-};      
+};

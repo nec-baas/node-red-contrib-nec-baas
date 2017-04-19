@@ -22,17 +22,20 @@
     RED.nodes.registerType('nebula-server', {
         category: 'config',
         defaults: {
-            appId: { value: '', required: true },    // use credential
-            appKey: { value: '', required: true },   // use credential
+            name: { value: '', required: true　},
             tenantId: { value: '', required: true }, 
-            baseUri: { value: '', required: true },
+            baseUri: { value: '', required: true }
         },
         credentials: {
             appId: { type: "text"},
             appKey: { type: "text"}
         },
         label: function() {
-            return this.tenantId;
+            if (this.name) { 
+                return this.name;
+            } else {
+                return this.tenantId; // for compatibility with old version
+            }
         },
         oneditsave: function () {
         }
@@ -40,6 +43,11 @@
 </script>
 
 <script type="text/x-red" data-template-name="nebula-server">
+
+    <div class="form-row">
+        <label for="node-config-input-name"><i class="fa fa-tag"></i> <span data-i18n="nebula.label.name"></span></label>
+        <input type="text" id="node-config-input-name" data-i18n="[placeholder]nebula.placeholder.name">
+    </div>
     <div class="form-row">
         <label for="node-config-input-tenantId"><i class="icon-tag"></i> <span data-i18n="nebula.label.tenant"></span></label>
         <input type="text" id="node-config-input-tenantId">

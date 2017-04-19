@@ -1,12 +1,14 @@
 {
     "nebula": {
         "label": {
+            "name":"Name",
             "tenant":"Tenant ID",
             "app-id": "App ID",
             "app-key": "App Key",
             "base-uri": "Base URI"
         },
         "placeholder": {
+            "name": "Connection Name",
             "base-uri": "http://aaa.bbb.ccc/api"
         },
         "tip": "",
