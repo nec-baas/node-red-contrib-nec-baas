@@ -6,16 +6,17 @@
             "method": "Method",
             "subpath": "Subpath",
             "apidata": "API Data",
-            "response": "Response",
-            "binaryResp": "Use Binary Response?",
+            "jsonObject": "Convert to JSON object?",
             "headers": "Headers",
             "addHeaders": "Add Headers?",
             "clearHeaders": "Clear Headers?",
-            "contentType": "content-Type"            
+            "contentType": "content-Type:",
+            "response": "Response",
+            "binaryResp": "Use Binary Response?"
         },
         "placeholder": {
             "name": "Name of this Node",
-            "apidata": "{\"name\":\"foo\"}",
+            "apidata": "e.g. JSON String, plain text String",
             "contentType": "text/html"
         },
         "tip": "",

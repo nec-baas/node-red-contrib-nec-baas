@@ -15,8 +15,8 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
- 
-module.exports = function(RED) {
+
+module.exports = function (RED) {
     "use strict";
     const Common = require('./nebula-common');
     
@@ -30,10 +30,15 @@ module.exports = function(RED) {
         var method = config.method;
         var subpath = config.subpath;
         var apidata = config.apidata;
-        var isBinary = config.isBinaryResponse;
+        var isJsonRequest = config.isJsonRequest;    
+        
         var isAddHeaders = config.isAddHeaders;
         var isClearHeaders = config.isClearHeaders;
         var contentType = config.contentType;
+        
+        var isJsonResponse = config.isJsonResponse;      
+        var isBinary = config.isBinaryResponse;        
+                
         this.rules = config.rules || [];
 
         for (var i=0; i<this.rules.length; i++) {
@@ -67,7 +72,7 @@ module.exports = function(RED) {
                 var addHeaders = msg.header ? (msg.header.addHeaders ? msg.header.addHeaders : {}) : {};
 
                 try { 
-                    if (typeof apidata  === "string") {
+                    if (isJsonRequest && typeof apidata  === "string") {
                         apidata = JSON.parse(apidata);
                     }
                 } catch(err) {
@@ -81,9 +86,9 @@ module.exports = function(RED) {
                 }
                 
                 if (Object.keys(addHeaders).length) {
-                    for (var key in addHeaders) {
-                        var value = addHeaders[key];
-                        customApi.addHeader(key, value);
+                    for (var headerKey in addHeaders) {
+                        var headerValue = addHeaders[headerKey];
+                        customApi.addHeader(headerKey, headerValue);
                     }
                 } else {
                     if (isAddHeaders) {
@@ -110,7 +115,7 @@ module.exports = function(RED) {
 
                 customApi.execute(apidata)
                     .then(function (result) {
-                        if (!isBinary) {
+                        if (isJsonResponse && !isBinary) {
                             result = JSON.parse(result);
                         }
                         Common.sendMessage(node, "ok", result, msg);

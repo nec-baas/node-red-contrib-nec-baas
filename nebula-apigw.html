@@ -39,10 +39,11 @@
         <input type="text" id="node-input-apidata" data-i18n="[placeholder]nebula.placeholder.apidata">
     </div>
     <div class="form-row">
-        <label for="node-input-isBinaryResponse"><i class="fa fa-check"></i> <span data-i18n="nebula.label.response"></span></label>
-        <input type="checkbox" id="node-input-isBinaryResponse" style="width: auto;">
-        &nbsp;Use Binary Response?
+        <label></label>
+        <input type="checkbox" id="node-input-isJsonRequest" style="display: inline-block; width: auto; vertical-align: top;">
+         &nbsp; <span data-i18n="nebula.label.jsonObject"></span>
     </div>
+    <hr align="middle"></hr>
     <div class="form-row">
         <label for="node-input-isAddHeaders"><i class="fa fa-check"></i> <span data-i18n="nebula.label.headers"></span></label>
         <input type="checkbox" id="node-input-isAddHeaders" style="display: inline-block; width: auto; vertical-align: top;">
@@ -54,11 +55,23 @@
         <ol id="node-input-rule-container"></ol>
     </div>
     <div class="form-row">
-        <label for="node-input-contentType"><i class="fa fa-wrench"></i> Content-Type</label>
-        <input type="text" id="node-input-contentType" data-i18n="[placeholder]nebula.placeholder.contentType">
+        <label></label><label for="node-input-contentType"> <span data-i18n="nebula.label.contentType"></span></label>
+        <input type="text" id="node-input-contentType" style="width: auto;" data-i18n="[placeholder]nebula.placeholder.contentType">
+    </div>
+    <hr align="middle"></hr>
+    <div class="form-row">
+        <label for="node-input-isBinaryResponse"><i class="fa fa-check"></i> <span data-i18n="nebula.label.response"></span></label>
+        <input type="checkbox" id="node-input-isJsonResponse" style="display: inline-block; width: auto; vertical-align: top;">
+         &nbsp; <span data-i18n="nebula.label.jsonObject"></span>
     </div>
     <div class="form-row">
-        <label for="node-input-name"><i class="fa fa-tag"></i> <span data-i18n="nebula.label.name"></span></span></label>
+        <label></label>
+        <input type="checkbox" id="node-input-isBinaryResponse" style="display: inline-block; width: auto; vertical-align: top;">
+         &nbsp; <span data-i18n="nebula.label.binaryResp"></span>
+    </div>
+    <hr align="middle"></hr>
+    <div class="form-row">
+        <label for="node-input-name"><i class="fa fa-tag"></i> <span data-i18n="nebula.label.name"></span></label>
         <input type="text" id="node-input-name" data-i18n="[placeholder]nebula.placeholder.name">
     </div>
     
@@ -77,11 +90,21 @@
             if ($("#node-input-isClearHeaders").prop("checked")) {
                 $("#node-input-isAddHeaders").prop("checked", false);
                 $("#dialog-form>div.node-input-rule-container-row").hide();
-            } else {
-                // do nothing;
             }
         });
         
+        $("#node-input-isJsonResponse").change(function() {
+            if ($("#node-input-isJsonResponse").prop("checked")) {
+                $("#node-input-isBinaryResponse").prop("checked", false);
+            }
+        });
+        
+        $("#node-input-isBinaryResponse").change(function() {
+            if ($("#node-input-isBinaryResponse").prop("checked")) {
+                $("#node-input-isJsonResponse").prop("checked", false);
+            }
+        });
+           
     </script>
 </script>
 
@@ -102,7 +125,7 @@
     
     <h4>Header</h4>
     <p>Set the Header properties in the edit dialog, or it can be set by the following properties
-       on the incoming message. If the 'Clear' is checked, Clear headers except for 'Content-Type'.</p>
+       on the incoming message. If the 'Clear' is checked, headers are cleared except for 'Content-Type'.</p>
     <pre>
     msg.header = {
         addHeaders: {"header1":"aaa", "header2":"bbb", ...},
@@ -134,12 +157,13 @@
             method: { value: ""},
             subpath: { value: ""},
             apidata: { value: ""},
-            
-            isBinaryResponse: { value: false},
+            isJsonRequest: { value: true},
             isAddHeaders: { value: false},
             rules: { value:[{v:""}]},
             isClearHeaders: { value: false},
-            contentType: { value: ""}
+            contentType: { value: ""},
+            isJsonResponse: { value: true},
+            isBinaryResponse: { value: false}  
         },
         inputs:1,
         outputs:1,
@@ -156,7 +180,7 @@
                 var keyField = rule.find(".node-input-rule-key");
                 var valueField = rule.find(".node-input-rule-value");
 
-                if (newWidth == 0) { // editor hide -> show
+                if (newWidth === 0) { // editor hide -> show
                     newWidth = 400;
                 }
                 keyField.width(100);
@@ -184,13 +208,13 @@
                     resizeRule(container);
                 },
                 removeItem: function(opt) {
-                    var rules = $("#node-input-rule-container").editableList('items');
-                    rules.each(function(i) { $(this).find(".node-input-rule-index").html(i+1); });
+                    var removeRules = $("#node-input-rule-container").editableList('items');
+                    removeRules.each(function(i) { $(this).find(".node-input-rule-index").html(i+1); });
                 },
                 resizeItem: resizeRule,
                 sortItems: function(rules) {
-                    var rules = $("#node-input-rule-container").editableList('items');
-                    rules.each(function(i) { $(this).find(".node-input-rule-index").html(i+1); });
+                    var sortRules = $("#node-input-rule-container").editableList('items');
+                    sortRules.each(function(i) { $(this).find(".node-input-rule-index").html(i+1); });
                 },
                 sortable: true,
                 removable: true
