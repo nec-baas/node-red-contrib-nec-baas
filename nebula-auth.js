@@ -30,8 +30,8 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-
-module.exports = function(RED) {
+ 
+module.exports = function (RED) {
     "use strict";
     const Common = require('./nebula-common');
 
@@ -43,10 +43,9 @@ module.exports = function(RED) {
 
         var nebulaServer = RED.nodes.getNode(config.nebulaServer);
         var credAuth = this.credentials;
-        
         var initFlag = config.initFlag;
         var action = config.action;
-        
+
         try {
             if (initFlag) {
                 Common.initNebula(node, this.context(), nebulaServer);
@@ -61,7 +60,7 @@ module.exports = function(RED) {
         
         this.on('input', function(msg) {
             var Nebula = this.context().flow.get('Nebula');
-            
+
             try {
                 if (action === "LOGIN") { 
                     var nebulaEmail = msg.email ? msg.email : (credAuth && credAuth.email ? credAuth.email : null);
@@ -73,16 +72,16 @@ module.exports = function(RED) {
                         "username": nebulaUser,
                         "password"  : nebulaPwd
                         };
-
+     
                     Nebula.User.login(userInfo)
-                        .then(function(userObj) {
+                        .then(function(userObj) {                 
                             Common.sendMessage(node, "ok", userObj, msg);
-                            node.status({fill: "green", shape: "dot", text: RED._("nebula.status.authorized")});
+                            node.status({fill: "green", shape: "dot", text: RED._("nebula.status.authorized")});               
                         })
-                        .catch(function(error) {
+                        .catch(function(error) {     
                             Common.sendMessage(node, "failed", error, msg);
                             node.status({fill: "red", shape: "ring", text: RED._("nebula.status.unauthorized")});
-                        });
+                        });   
                 } else { // LOGOUT
                     Nebula.User.logout()
                         .then(function() {
@@ -98,6 +97,7 @@ module.exports = function(RED) {
                 node.warn(err);
             }   
         });
+   
     }
     RED.nodes.registerType("auth", NebulaInitAuthNode, {
         credentials: {

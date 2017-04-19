@@ -30,15 +30,15 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
- 
-module.exports = function(RED) {
+
+module.exports = function (RED) {
     "use strict";
     const util = require("util");
     const vm = require("vm");
     const Common = require('./nebula-common');
 
     function sendResults(node,_msgid,msgs) {
-        if (msgs == null) {
+        if (!msgs) {
             return;
         } else if (!util.isArray(msgs)) {
             msgs = [msgs];
@@ -250,10 +250,10 @@ module.exports = function(RED) {
             });
             this.on("close", function() {
                 while(node.outstandingTimers.length > 0) {
-                    clearTimeout(node.outstandingTimers.pop())
+                    clearTimeout(node.outstandingTimers.pop());
                 }
                 while(node.outstandingIntervals.length > 0) {
-                    clearInterval(node.outstandingIntervals.pop())
+                    clearInterval(node.outstandingIntervals.pop());
                 }
             })
         } catch(err) {

@@ -188,7 +188,7 @@
                 } else {
                     selectWidth = 120;
                 }
-                if (newWidth == 0) { // editor hide,show
+                if (newWidth === 0) { // editor hide,show
                     newWidth = 400;
                 }
                 keyField.width(60);
@@ -219,8 +219,8 @@
                     var valueField = $('<input/>',{class:"node-input-rule-value",type:"text",style:"margin-left: 5px; width: 145px;"}).appendTo(row).typedInput({default:'str',types:['msg','flow','global','str','num','bool','json']});
                     
                     var existSelectField = $('<select/>',{class:"node-input-rule-exist-select", style:"width:145px; margin-left: 5px; text-align: center;"}).appendTo(row);
-                    for (var d in flags) {
-                        existSelectField.append($("<option></option>").val(flags[d].v).text(flags[d].t));
+                    for (var f in flags) {
+                        existSelectField.append($("<option></option>").val(flags[f].v).text(flags[f].t));
                     }
                     
                     var caseSensitive = $('<input/>',{id:"node-input-rule-case-"+i,class:"node-input-rule-case",type:"checkbox",style:"width:auto;vertical-align:top"}).appendTo(row2);
@@ -262,13 +262,13 @@
                     selectField.change();
                 },
                 removeItem: function(opt) {
-                    var rules = $("#node-input-rule-container").editableList('items');
-                    rules.each(function(i) { $(this).find(".node-input-rule-index").html(i+1); });
+                    var removeRules = $("#node-input-rule-container").editableList('items');
+                    removeRules.each(function(i) { $(this).find(".node-input-rule-index").html(i+1); });
                 },
                 resizeItem: resizeRule,
                 sortItems: function(rules) {
-                    var rules = $("#node-input-rule-container").editableList('items');
-                    rules.each(function(i) { $(this).find(".node-input-rule-index").html(i+1); });
+                    var sortRules = $("#node-input-rule-container").editableList('items');
+                    sortRules.each(function(i) { $(this).find(".node-input-rule-index").html(i+1); });
                 },
                 sortable: true,
                 removable: true

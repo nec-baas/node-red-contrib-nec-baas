@@ -30,8 +30,8 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
- 
-module.exports = function(RED) {
+
+module.exports = function (RED) {
     "use strict";
     const Common = require('./nebula-common');
     
@@ -106,11 +106,9 @@ module.exports = function(RED) {
         this.name = n.name;
         this.func = n.func;
 
-        var nebulaServer = RED.nodes.getNode(n.nebulaServer);
         var nebulaBucketName = n.bucketName;
         
         this.rules = n.rules || [];
-        var node = this;
         
         for (var i=0; i<this.rules.length; i++) {
             var rule = this.rules[i];
@@ -155,7 +153,6 @@ module.exports = function(RED) {
                 }
                 
                 var query = new Nebula.ObjectQuery();
-                query.setLimit(-1);
  
                 // Enable clause
                 if (isClause) {
@@ -176,7 +173,7 @@ module.exports = function(RED) {
                         var evaluatedValue = RED.util.evaluateNodeProperty(value, inputType, node, msg); 
                         
                         var tmp = createClause(selectType, key, evaluatedValue, caseFlag, Nebula, node);
-                        if (tmp == null) {　// Skip the clause if the key is null.
+                        if (tmp === null) {　// Skip the clause if the key is null.
                             node.warn("Clause property is Invalid (selectType, key, etc.)");
                         } else {
                             clauseArray[validCount] = tmp;
@@ -203,14 +200,14 @@ module.exports = function(RED) {
                 }
 
                 if (skipCount) {
-                    var value = RED.util.evaluateNodeProperty(skipCount, 'num', node, msg); 
-                    query.setSkipCount(value);
+                    var numSkip = RED.util.evaluateNodeProperty(skipCount, 'num', node, msg); 
+                    query.setSkipCount(numSkip);
                 }
 
                 if (limit) {
-                    var value = RED.util.evaluateNodeProperty(limit, 'num', node, msg); 
-                    query.setLimit(value);
-                } else {
+                    var numLimit = RED.util.evaluateNodeProperty(limit, 'num', node, msg); 
+                    query.setLimit(numLimit);
+                } else {   
                     query.setLimit(100);
                 }
                 
@@ -219,17 +216,18 @@ module.exports = function(RED) {
                         var tmpProjection = JSON.parse(projection);
                         var evalProjection = {};
                         
-                        for (var key in tmpProjection) {
-                            var strValue = tmpProjection[key];
+                        for (var tmpKey in tmpProjection) {
+                            var strValue = tmpProjection[tmpKey];
                             // Convert string to number.
                             var numValue = RED.util.evaluateNodeProperty(strValue, 'num', node, null); 
-                            evalProjection[key] = numValue;
+                            evalProjection[tmpKey] = numValue;
                         }
+                        
+                        query.setProjection(evalProjection);
+                        
                     } catch(err) {
                         throw "Invalid 'projection'. Check the json format.";                    
                     }               
-
-                    query.setProjection(evalProjection);
                 }
                 //node.log("query: " + JSON.stringify(query));
 
@@ -279,14 +277,13 @@ module.exports = function(RED) {
                 }
                 
                 if (action === "SAVE_OBJECT") { 
-    
                     bucket.save(payload)
                     .then(function(obj) {
                         Common.sendMessage(node, "ok", obj, msg);
                     })
-                    .catch(function (error) {                            
+                    .catch(function (error) {                         
                         if (error.status === 404 && error.responseText === "{\"error\":\"No such bucket\"}") {
-                            if (createBucket) {
+                            if (createBucket) {  
                                 // Create a bucket if no bucket exists.
                                 node.warn("Try to create a new bucket('" + bucketName + "') ...");
                                 bucket = new Nebula.ObjectBucket(bucketName); // Set new bucketName
@@ -297,8 +294,6 @@ module.exports = function(RED) {
                                 .catch(function(error) {
                                     node.error("Failed to create a new bucket.");
                                 });
-                            } else {
-                                throw RED._("nebula.errors.no-such-bucket");
                             }
                         }
                         Common.sendMessage(node, "failed", error, msg);
@@ -322,13 +317,13 @@ module.exports = function(RED) {
                     bucket.query(query)
                     .then(function(objects) {
                         var length = objects.length;
-                        if (length == 0) {
+                        if (length === 0) {
                             throw RED._("nebula.errors.object-not-found");
                         }
 
                         // Delete all objects.
                         for (var i=0; i<length; i++) {
-                            var id = objects[i]["_id"];
+                            var id = objects[i]._id;
                             //node.log("objectId: " + id);
                             bucket.remove(id)
                             .then(function(objid) {

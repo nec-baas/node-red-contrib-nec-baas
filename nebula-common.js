@@ -27,11 +27,10 @@ class Common {
     static initNebula(node, context, nebulaServer) {
         Common.setupProxy(node);
 
-        if (nebulaServer != null) {
+        if (nebulaServer) {
             let service = context.flow.get('Nebula');
-
             // Create Nebula service if the service does't exist.
-            if (service == null) { // null or undefined
+            if (!service) { // null or undefined
                 service = new Nebula.NebulaService();
                 node.log("Nebula service is created.");
             }
@@ -69,7 +68,7 @@ class Common {
                 if (m && m.length >= 3) {
                     proxy = {
                         host: m[2],
-                        port: (m[4] != null ? m[4] : 80)
+                        port: (m[4] ? m[4] : 80)
                     };
                 }
             }
@@ -91,9 +90,9 @@ class Common {
     }
     
     static sendMessage(node, result, payload, msg){  
-        msg.payload = payload;
         msg.result = result;
-        node.send(msg);
+        msg.payload = payload; 
+        node.send(msg); 
     }
 }
 
