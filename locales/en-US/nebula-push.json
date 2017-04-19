@@ -9,13 +9,13 @@
             "gcm": "GCM",
             "apns": "APNS",
             "sse": "SSE",
-            "gcm-title": "Title",
-            "gcm-uri": "URI",
-            "apns-badge": "Badge Count",
-            "apns-category": "Category",
-            "apns-sound": "Sound File",
-            "sse-event-id": "Event ID",
-            "sse-event-type": "Event Type"
+            "gcm-title": "Title:",
+            "gcm-uri": "URI:",
+            "apns-badge": "Badge Count:",
+            "apns-category": "Category:",
+            "apns-sound": "Sound File:",
+            "sse-event-id": "Event ID:",
+            "sse-event-type": "Event Type:"
         },
         "placeholder": {
             "name": "Name of this Node",
