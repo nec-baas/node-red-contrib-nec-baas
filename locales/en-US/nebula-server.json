@@ -5,7 +5,8 @@
             "tenant":"Tenant ID",
             "app-id": "App ID",
             "app-key": "App Key",
-            "base-uri": "Base URI"
+            "base-uri": "Base URI",
+            "use-proxy": "Use proxy?"
         },
         "placeholder": {
             "name": "Connection Name",

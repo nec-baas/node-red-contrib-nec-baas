@@ -46,9 +46,15 @@ module.exports = function (RED) {
         var initFlag = config.initFlag;
         var action = config.action;
 
+        if (config.pfxType) {
+            config.certType = "CERT_TYPE_PFX";
+        } else if (config.pemType) {
+            config.certType = "CERT_TYPE_PEM";
+        }
+
         try {
             if (initFlag) {
-                Common.initNebula(node, this.context(), nebulaServer);
+                Common.initNebula(node, this.context(), nebulaServer, config);
             } else {
                 // no initialize
             }
@@ -82,7 +88,7 @@ module.exports = function (RED) {
                             Common.sendMessage(node, "failed", error, msg);
                             node.status({fill: "red", shape: "ring", text: RED._("nebula.status.unauthorized")});
                         });   
-                } else { // LOGOUT
+                } else if (action === "LOGOUT") {
                     Nebula.User.logout()
                         .then(function() {
                             Common.sendMessage(node, "ok", null, msg);
@@ -92,6 +98,14 @@ module.exports = function (RED) {
                             Common.sendMessage(node, "failed", error, msg);
                             node.status({fill: "red", shape: "ring", text: RED._("nebula.status.logout-failed")});
                         });
+                } else if (action === "USE_CLIENT_CERT") { 
+                    var certOptions = Common.readClientCertificate(node, config);
+                    Nebula.setClientCertificate(certOptions);
+                    this.context().flow.set('Nebula', Nebula);
+                    Common.sendMessage(node, "ok", null, msg);
+                    node.status({fill: "green", shape: "dot", text: RED._("nebula.status.cert-is-set")});
+                } else {
+                    node.warn(RED._("nebula.errors.no-action-selected"));
                 }
             } catch(err) {
                 node.warn(err);

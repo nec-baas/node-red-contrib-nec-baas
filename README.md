@@ -7,7 +7,7 @@ node-red-contrib-nec-baas
 ------------
 
 提供する機能(ノード)は以下のとおりです。
-* NEC BaaS への認証(ログイン/ログアウト)に使用するノード
+* NEC BaaS への認証(パスワード認証/クライアント証明書認証)に使用するノード
 * NEC BaaS のオブジェクトストレージからデータ取得するノード
 * NEC BaaS のオブジェクトストレージへデータを保存するノード
 * NEC BaaS が提供する様々な機能を JavaScript で記述できるノード
@@ -33,22 +33,23 @@ npm uninstall node-red-contrib-nec-baas
 
 1. NEC BaaS の認証ノード
 
-    NEC BaaS への認証(ログイン/ログアウト)に使用するノードです。
-    認証ノード(auth)の設定ダイアログを開き、以下を設定してください。  
+    NEC BaaS への認証(パスワード認証/クライアント証明書認証)に使用するノードです。
+    認証ノード(auth)の設定ダイアログを開き、以下を設定してください。
     * `Initialize?` をチェック後、接続先の`NEC BaaS サーバ`情報を `Config` 欄に設定します。
-    * ログイン認証を行う場合は、 `Action` 欄を `login` としてください。
-    * ログイン認証に必要なアカウント情報を `Email`　(または `User`), `Password` 欄に入力してください。
-   
+    * パスワード認証を行う場合は、 `Action` 欄を `login` としてください。
+    * パスワード認証に必要なアカウント情報を `Email`　(または `User`), `Password` 欄に入力してください。
+    * クライアント証明書認証を行う場合は、 `Action` 欄を `Use Client Cert authentication` とした後、クライアント証明書のファイルパスを入力してください。
+
 2. NEC BaaS のデータ保存ノード
 
     NEC BaaS のオブジェクトストレージへデータを保存するノードです。
-    データ保存ノード(object)の設定ダイアログを開き、以下を設定してください。  
+    データ保存ノード(object)の設定ダイアログを開き、以下を設定してください。
     * `Bucket Name` 欄に Bucket 名を入力してください。
 
 3. NEC BaaS のデータ取得ノード
 
     NEC BaaS のオブジェクトストレージからデータを取得するノードです。
-    データ取得ノード(object)の設定ダイアログを開き、以下を設定してください。  
+    データ取得ノード(object)の設定ダイアログを開き、以下を設定してください。
     * `Bucket Name` 欄に Bucket 名を入力してください。
     * 全てのオブジェクトデータを取得する場合は、 `Use Search conditions?` のチェックを無効にしてください。
     * 検索条件を指定する場合は、 `Use Search conditions?` のチェックを有効にして条件式を入力してください。
@@ -79,7 +80,7 @@ npm uninstall node-red-contrib-nec-baas
 5. NEC BaaS の Push 送信ノード
 
     NEC BaaS の管理下にあるクライアント端末に Push 送信するノードです。
-    Push 送信ノード(push)の設定ダイアログを開き、以下を設定してください。  
+    Push 送信ノード(push)の設定ダイアログを開き、以下を設定してください。
     * 特定の「チャネル」向けに Push 送信したい場合は、 `Channels` 欄に配信先チャネル名を入力してください。  
         例) channel1, channel2, ...
     * 特定の「ユーザ/グループ」向けに Push 送信したい場合は、 `Receivers` 欄に受信者を入力してください。  
@@ -90,7 +91,7 @@ npm uninstall node-red-contrib-nec-baas
 6. NEC BaaS の API-GW ノード
 
     NEC BaaS に事前に登録された API (プログラム)を実行するノードです。
-    API-GW ノードの設定ダイアログを開き、以下を設定してください。  
+    API-GW ノードの設定ダイアログを開き、以下を設定してください。
     * 実行する API 情報として、 `API Name`, `Method`, `Subpath`, `API Data`　を入力してください。
       本パラメータに対応した API が実行されます。  
     * API 実行のレスポンスをバイナリ(buffer)で受信する場合は、`Response` のチェックを有効にしてください。  
@@ -102,7 +103,7 @@ npm uninstall node-red-contrib-nec-baas
 * NEC BaaS のライブラリ(baas.min.js)の使用
 
    ノード内のスクリプトからは、 NEC BaaS のライブラリ(baas.min.js)を `Nebula` という名前で参照できるようにしています。  
-   例) var Nebula = flow.get('Nebula');  
+   例) var Nebula = flow.get('Nebula');
 
    NEC BaaS の複数ノード間で NEC BaaS ライブラリのコンテキストを共有するため、
    [Flow context](http://nodered.org/docs/creating-nodes/context) を使用しています。

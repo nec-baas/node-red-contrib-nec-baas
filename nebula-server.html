@@ -24,7 +24,9 @@
         defaults: {
             name: { value: '', required: true　},
             tenantId: { value: '', required: true }, 
-            baseUri: { value: '', required: true }
+            baseUri: { value: '', required: true },
+            tenantId: { value: '', required: true },
+            useProxy: { value: true } // Proxy settings are not yet supported.
         },
         credentials: {
             appId: { type: "text"},
@@ -63,6 +65,11 @@
     <div class="form-row">
         <label for="node-config-input-baseUri"><i class="fa fa-globe"></i> <span data-i18n="nebula.label.base-uri"></span></label>
         <input type="text" id="node-config-input-baseUri" data-i18n="[placeholder]nebula.placeholder.base-uri">
+    </div>
+    <p style="margin-bottom:1em;">
+    <div class="form-row" style="visibility: hidden;">
+        <label for="node-config-input-useProxy"><i class="fa fa-check"></i> <span data-i18n="nebula.label.use-proxy"></span></label>
+        <input type="checkbox" id="node-config-input-useProxy" style="width: auto;">
     </div>
 </script>
 

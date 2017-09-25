@@ -18,15 +18,16 @@
 
 'use strict';
 
+const fs = require('fs');
+const URL = require('url');
 const Nebula = require('./lib/baas.min');
-
+   
 /**
  * Common
  */
 class Common {
-    static initNebula(node, context, nebulaServer) {
-        Common.setupProxy(node);
-
+    static initNebula(node, context, nebulaServer, config) {
+    
         if (nebulaServer) {
             let service = context.flow.get('Nebula');
             // Create Nebula service if the service does't exist.
@@ -36,6 +37,14 @@ class Common {
             }
             // Initialize Nebula
             service.initialize(nebulaServer.nebulaConfig);
+            
+            // Set Proxy
+            if (nebulaServer.nebulaConfig && nebulaServer.nebulaConfig.useProxy === undefined) {
+                // If the 'useProxy' is not defined, enable the 'useProxy' to check proxy.
+                nebulaServer.nebulaConfig.useProxy = true; 
+            }
+            Common.setupProxy(Nebula, nebulaServer.nebulaConfig.useProxy, node);
+
             context.flow.set('Nebula', service); // Available in the downstream processes in the same flow.
         } else {
             node.warn("Initialize is enabled, but Nebula config is not set.");
@@ -43,45 +52,57 @@ class Common {
         }
     }
 
-    static setupProxy(node) {
+    static setupProxy(nebula, useProxy, node) {
         const proxy = Common.getProxyConfig();
-        if (proxy) {
-            Nebula.setHttpProxy(proxy);
-            Nebula.setHttpsProxy(proxy);
-            node.log("proxy: " + JSON.stringify(proxy));
+  
+        if (useProxy && proxy) {
+            let httpProxy = {
+                host: proxy.http.hostname,
+                port: Number(proxy.http.port)
+            };
+            
+            let httpsProxy = {
+                host: proxy.https.hostname,
+                port: Number(proxy.https.port)
+            };
+                      
+            nebula.setHttpProxy(httpProxy);
+            nebula.setHttpsProxy(httpsProxy);
+            node.log("proxy: http:" + JSON.stringify(httpProxy) + ", https:" + JSON.stringify(httpsProxy));
+        } else {
+            nebula.setHttpProxy(null);
+            nebula.setHttpsProxy(null);
+            node.log("proxy: null");
         }
     }
 
     static getProxyConfig() {
-        let proxy;
+        let proxyConfig = null;
 
         // Get the proxy info from the environment variable.
         if (process.env.http_proxy || process.env.https_proxy
             || process.env.HTTP_PROXY || process.env.HTTPS_PROXY) {
 
-            var httpProxy = process.env.http_proxy ? process.env.http_proxy : process.env.HTTP_PROXY;
-            var httpsProxy = process.env.https_proxy ? process.env.https_proxy : process.env.HTTPS_PROXY;
-            var proxyConfig = httpProxy ? httpProxy : httpsProxy;
+            let httpProxy = process.env.http_proxy ? process.env.http_proxy : process.env.HTTP_PROXY;
+            let httpsProxy = process.env.https_proxy ? process.env.https_proxy : process.env.HTTPS_PROXY;
 
-            if (proxyConfig) {
-                var m = proxyConfig.match(/^(http:\/\/)?([^:\/]+)(:([0-9]+))?/i);
-                if (m && m.length >= 3) {
-                    proxy = {
-                        host: m[2],
-                        port: (m[4] ? m[4] : 80)
-                    };
-                }
-            }
+            let httpUrl = URL.parse(httpProxy);
+            let httpsUrl = URL.parse(httpsProxy);
+
+            proxyConfig = {
+                http: httpUrl,
+                https: httpsUrl
+            };
         }
-        return proxy;
+        return proxyConfig;
     }
 
     static csv2json(csv){
-        var array = [];
-        var values = csv.split(',');
+        let array = [];
+        let values = csv.split(',');
 
-        for (var i=0; i<values.length; i++) {
-            var value = values[i].trim();
+        for (let i=0; i<values.length; i++) {
+            let value = values[i].trim();
             if (value) {
                 array.push(value);
             }
@@ -93,6 +114,40 @@ class Common {
         msg.result = result;
         msg.payload = payload; 
         node.send(msg); 
+    }
+
+    static readClientCertificate(node, config) {
+            
+            let certType = config.certType;
+            let pfxCertPath = config.pfxCertPath; 
+            let pemCertPath = config.pemCertPath; 
+            let pemKeyPath = config.pemKeyPath; 
+            let passPhrase = config.passPhrase; 
+            let caCertPath = config.caCertPath;
+            let certOptions = null;
+            
+            if (!config.pfxCertPath && !config.pemCertPath) {
+                node.error("'Use client certfificate' is enabled, but Certificate file path is not set.");
+                return null;
+            }
+            
+            if (certType === "CERT_TYPE_PFX") {
+                certOptions = {
+                    pfx: fs.readFileSync(pfxCertPath),
+                    passphrase: passPhrase,
+                    ca: fs.readFileSync(caCertPath)
+                };
+            } else if (certType === "CERT_TYPE_PEM"){
+                certOptions = {
+                    cert: fs.readFileSync(pemCertPath),
+                    key: fs.readFileSync(pemKeyPath),
+                    ca: fs.readFileSync(caCertPath)
+                };
+            } else {
+                // do nothing.
+            }
+                                     
+            return certOptions;
     }
 }
 

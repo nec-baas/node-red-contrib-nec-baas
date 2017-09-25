@@ -42,9 +42,10 @@
     </div>      
     <div class="form-row">
         <label for="node-input-action"><i class="fa fa-wrench"></i> <span data-i18n="nebula.label.action"></span></label>
-        <select type="text" id="node-input-action">
-            <option value="LOGIN">login</option>
-            <option value="LOGOUT">logout</option>
+        <select type="text" id="node-input-action" style="width: auto;">
+            <option value="LOGIN" data-i18n="nebula.label.login"></option>
+            <option value="LOGOUT" data-i18n="nebula.label.logout"></option>
+            <option value="USE_CLIENT_CERT" data-i18n="nebula.label.use-client-cert"></option>
         </select>
     </div>    
     <div class="form-row node-input-userInfo">
@@ -60,7 +61,43 @@
             <label for="node-input-password"><i class="fa fa-lock"></i> <span data-i18n="nebula.label.password"></span></label>
             <input type="password" id="node-input-password">
         </div>
+    </div>  
+    <div class="form-row node-input-certType">
+        <hr align="middle"></hr>
+        <label><i class="fa fa-file"></i> <span data-i18n="nebula.label.certificate"></span></label>
+        <label><i class="fa fa-check"></i> <span data-i18n="nebula.label.cert-type"></span></label>
+        <input type="checkbox" id="node-input-pfxType" style="width: auto;"> <span data-i18n="nebula.label.pfx-type"></span>　&emsp;
+        <input type="checkbox" id="node-input-pemType" style="width: auto;"> <span data-i18n="nebula.label.pem-type"></span>　&emsp;
     </div>
+    <div class="form-row node-input-pfxCert">
+        <label></label>
+        <label> <span data-i18n="nebula.label.pfx-cert"></span></label>
+        <input type="text" id="node-input-pfxCertPath" style="width: auto;" data-i18n="[placeholder]nebula.placeholder.pfx-cert-path">
+        <div style="margin-bottom:10px;"></div>
+        <label></label>
+        <label> <span data-i18n="nebula.label.pass-phrase"></span></label>
+        <input type="text" id="node-input-passPhrase" style="width: auto;">
+        <div style="margin-bottom:10px;"></div>
+    </div>
+    <div class="form-row node-input-pemCert">
+        <label></label>
+        <label> <span data-i18n="nebula.label.pem-cert"></span></label>
+        <input type="text" id="node-input-pemCertPath" style="width: auto;" data-i18n="[placeholder]nebula.placeholder.pem-cert-path">
+        <div style="margin-bottom:10px;"></div>
+        <label></label>
+        <label> <span data-i18n="nebula.label.pem-key"></span></label>
+        <input type="text" id="node-input-pemKeyPath" style="width: auto;" data-i18n="[placeholder]nebula.placeholder.pem-key-path">
+        <div style="margin-bottom:10px;"></div>
+    </div>
+    <div class="form-row node-input-caCert">
+        <!-- <hr align="middle"></hr> -->
+        <label><i class="fa fa-file"></i> <span data-i18n="nebula.label.ca-cert"></span></label>     
+        <label> <span data-i18n="nebula.label.filename"></span></label>
+        <input type="text" id="node-input-caCertPath" style="width: auto;" data-i18n="[placeholder]nebula.placeholder.ca-cert-path">
+        <div style="margin-bottom:10px;"></div>
+        <hr align="middle"></hr>
+    </div>
+
     <div class="form-row">
         <label for="node-input-name"><i class="fa fa-tag"></i> <span data-i18n="nebula.label.name"></span></label>
         <input type="text" id="node-input-name" data-i18n="[placeholder]nebula.placeholder.name">
@@ -78,11 +115,53 @@
         });
         
         $("#node-input-action").change(function() {
-            var newAction = $("#node-input-action").val();
-            if (newAction === "LOGIN") {
+            var action = $("#node-input-action").val();
+            if (action === "LOGIN") {
                 $(".node-input-userInfo").show();
-            } else {
+                uncheckCertType();
+                hideCertItems();
+            } else if (action === "LOGOUT"){
                 $(".node-input-userInfo").hide();
+                uncheckCertType();
+                hideCertItems();
+            } else { // USE_CLIENT_CERT
+                $(".node-input-userInfo").hide();
+                $(".node-input-certType").show();
+                $(".node-input-caCert").show();
+            }
+        });
+
+        function uncheckCertType() {
+            $("#node-input-pemType").prop("checked", false);
+            $("#node-input-pfxType").prop("checked", false);
+        }
+
+        function hideCertItems() {
+            $(".node-input-certType").hide();
+            $(".node-input-pfxCert").hide();
+            $(".node-input-pemCert").hide();
+            $(".node-input-caCert").hide();
+        }
+
+        $("#node-input-pfxType").change(function() {
+            if ($("#node-input-pfxType").prop("checked")) {
+                $("#node-input-pemType").prop("checked", false);
+                $(".node-input-pemCert").hide();
+                $(".node-input-pfxCert").show();
+                $(".node-input-caCert").show();
+            } else {
+                $(".node-input-pfxCert").hide();
+            }
+        });
+               
+        $("#node-input-pemType").change(function() {
+            if ($("#node-input-pemType").prop("checked")) {
+                $("#node-input-pfxType").prop("checked", false); 
+                $(".node-input-pemCert").show();
+                $(".node-input-pfxCert").hide();
+                $(".node-input-caCert").show();
+            } else {
+                $(".node-input-pemCert").hide();
             }
         });
     </script>
@@ -99,8 +178,10 @@
     <p>The function returns the messages<code>msg.result</code>,<code>msg.payload</code> to pass on to the next nodes
     in the flow.</p>
     
-    <code>msg.payload</code> contains logged in user info.
+    <code>msg.payload</code> contains logged-in user info.
     
+    <h4>Client certificate authentication</h4>
+    <p>Select the 'Use client certificate' and set the client certificate in the edit dialog. In that case, no email and password are required.</p>
 </script>
 
 <script type="text/javascript">
@@ -111,7 +192,14 @@
             initFlag: {value: false},
             name: {value:"auth"},
             nebulaServer: {value: "", type: 'nebula-server', required:false},
-            action: {value: "LOGIN"}
+            action: {value: "LOGIN"},
+            pfxType: {value: false},
+            pemType: {value: false},
+            pfxCertPath: {value:""},
+            passPhrase: {value:""},
+            pemCertPath: {value:""},
+            pemKeyPath: {value:""},
+            caCertPath: {value:""}
         },
         credentials: {
             email: {type:"text"},

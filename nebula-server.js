@@ -32,7 +32,8 @@ module.exports = function (RED) {
                 appKey: credentials.appKey,
                 baseUri: config.baseUri,
                 offline: false,
-                debugMode: "release"
+                debugMode: "release",
+                useProxy: config.useProxy
             };
         } else {
             node.error("Credentials not found");

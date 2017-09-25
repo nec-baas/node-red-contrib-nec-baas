@@ -5,21 +5,40 @@
             "initialize":"Initialize?",
             "config": "Config",
             "action": "Action",
+            "login": "Login",
+            "logout": "Logout",
+            "use-client-cert": "Use Client Cert authentication",
             "email": "Email",
             "user": "User",
-            "password": "Password"
+            "password": "Password",
+            "cert-type": "Type",
+            "pfx-type": "PFX",
+            "pem-type": "PEM",
+            "certificate": "Certificate",
+            "pfx-cert": "Filename",
+            "pem-cert": "Filename",
+            "pem-key": "Key filename",
+            "pass-phrase": "Pass phrase",
+            "ca-cert": "CA",
+            "filename": "Filename"     
         },
         "placeholder": {
-            "name": "Name of this Node"
+            "name": "Name of this Node",
+            "pfx-cert-path": "/home/user/*.p12",
+            "pem-cert-path": "/home/user/*.pem",
+            "pem-key-path": "/home/user/*.key",
+            "ca-cert-path": "/home/user/*.pem"
         },
         "tip": "",
         "status": {
             "authorized": "authorized",
             "unauthorized": "unauthorized",
             "not-logged-in": "not logged in",
-            "logout-failed": "logout failed"
+            "logout-failed": "logout failed",
+            "cert-is-set": "certificate is set"
         },
         "errors": {
+            "no-action-selected": "No action selected"
         }
     }
 }
