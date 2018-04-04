@@ -1,0 +1,27 @@
+{
+    "nebula": {
+        "label": {
+            "name":"Name",
+            "apiname": "API Name",
+            "reported": "Reported",
+            "deviceId": "Device ID",
+            "deviceType": "Device Type",
+            "repeat": "Repeat?"
+        },
+        "placeholder": {
+            "name": "Name of this Node",
+            "reported": "Input JSON string"
+        },
+        "tip": "",
+        "status": {
+        },
+        "info": {
+            "no-deviceid":"No DeviceID specified.",
+            "repeat-stopped":"Repeat stopped."
+        },
+        "errors": {
+            "invalid-apidata":"Invalid 'API Data'. Check the json format."
+        }
+    }
+}
+

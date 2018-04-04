@@ -1,0 +1,25 @@
+{
+    "nebula": {
+        "label": {
+            "name":"Name",
+            "action": "Action",
+            "user-id": "User ID"
+        },
+        "action": {
+            "get-current-user": "Get the current user",
+            "get-user-by-id": "Get the user by ID",
+            "get-all-users": "Get all users"
+        },
+        "placeholder": {
+            "name": "Name of this Node",
+            "apidata": "Input JSON string"
+        },
+        "tip": "",
+        "status": {
+        },
+        "errors": {
+            "user-id-not-found":"User ID is not set."
+        }
+    }
+}
+

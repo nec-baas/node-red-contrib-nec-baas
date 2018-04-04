@@ -1,0 +1,90 @@
+<!--
+  NEC Mobile Backend Platform
+
+  Copyright (c) 2014-2017 NEC Corporation
+
+  Licensed under the Apache License, Version 2.0 (the "License");
+  you may not use this file except in compliance with the License.
+  You may obtain a copy of the License at
+
+  http://www.apache.org/licenses/LICENSE-2.0
+
+  Unless required by applicable law or agreed to in writing, software
+  distributed under the License is distributed on an "AS IS" BASIS,
+  WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+  See the License for the specific language governing permissions and
+  limitations under the License.
+-->
+
+<script type="text/x-red" data-template-name="user in">
+
+    <div class="form-row">
+        <label for="node-input-action"><i class="fa fa-wrench"></i> <span data-i18n="nebula.label.action"></span></label>
+        <select type="text" id="node-input-action">
+            <option value="GET_CURRENT_USER" data-i18n="nebula.action.get-current-user"></option>
+            <option value="GET_USER_BY_ID" data-i18n="nebula.action.get-user-by-id"></option>
+            <option value="GET_ALL_USERS" data-i18n="nebula.action.get-all-users"></option>
+        </select>
+    </div>
+    <div class="form-row node-input-userId">
+        <label for="node-input-userId"><i class="fa fa-user"></i> <span data-i18n="nebula.label.user-id"></span></label>
+        <input type="text" id="node-input-userId">
+    </div>
+
+    <hr align="middle"></hr>
+    <div class="form-row">
+        <label for="node-input-name"><i class="fa fa-tag"></i> <span data-i18n="nebula.label.name"></span></label>
+        <input type="text" id="node-input-name" data-i18n="[placeholder]nebula.placeholder.name">
+    </div>
+    
+    <script>
+        $("#node-input-action").change(function() {
+            var newAction = $("#node-input-action").val();
+            if (newAction === "GET_USER_BY_ID") {
+                $(".node-input-userId").show();
+            } else {
+                $(".node-input-userId").hide();
+            }
+        });
+    </script>
+</script>
+
+<script type="text/x-red" data-help-name="user in">
+    <p>Reads users from the NEC BaaS Server and sends the users as <code>msg.payload</code>.
+       
+    <h4>Incoming messages</h4>
+
+    <h4>UserID</h4>
+    <p>Set the userId properties in the edit dialog. If left blank, it should be set the following properties
+       on the incoming message.</p>
+    <pre>
+    msg.userId = "ID_12345";
+    </pre>
+    
+    <h4>Sending messages</h4>
+    <p>The function returns the <code>msg.result</code>,<code>msg.payload</code> to pass on to the next nodes
+    in the flow.</p>
+    
+</script>
+
+<script type="text/javascript">
+    RED.nodes.registerType('user in', {
+        color:"#c0deed",
+        category: 'nec baas',
+        defaults: {
+            name: { value:"user"},
+            action: { value: "GET_CURRENT_USER"},
+            userId: { value: ""},
+        },
+        inputs:1,
+        outputs:1,
+        icon: "arrow-in.png",
+        align: 'left',
+        label: function() {
+            return this.name;
+        },
+        oneditsave: function() {
+        }
+    });
+</script>
+
