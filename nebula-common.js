@@ -1,7 +1,7 @@
 /**
  * NEC Mobile Backend Platform
  *
- * Copyright (c) 2014-2016 NEC Corporation
+ * Copyright (c) 2014-2017 NEC Corporation
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -20,7 +20,7 @@
 
 const fs = require('fs');
 const URL = require('url');
-const Nebula = require('./lib/baas.min');
+const Nebula = require('./lib/baas.min').Nebula;
    
 /**
  * Common
@@ -44,7 +44,6 @@ class Common {
                 nebulaServer.nebulaConfig.useProxy = true; 
             }
             Common.setupProxy(Nebula, nebulaServer.nebulaConfig.useProxy, node);
-
             context.flow.set('Nebula', service); // Available in the downstream processes in the same flow.
         } else {
             node.warn("Initialize is enabled, but Nebula config is not set.");
@@ -56,12 +55,12 @@ class Common {
         const proxy = Common.getProxyConfig();
   
         if (useProxy && proxy) {
-            let httpProxy = {
+            const httpProxy = {
                 host: proxy.http.hostname,
                 port: Number(proxy.http.port)
             };
             
-            let httpsProxy = {
+            const httpsProxy = {
                 host: proxy.https.hostname,
                 port: Number(proxy.https.port)
             };
@@ -83,11 +82,11 @@ class Common {
         if (process.env.http_proxy || process.env.https_proxy
             || process.env.HTTP_PROXY || process.env.HTTPS_PROXY) {
 
-            let httpProxy = process.env.http_proxy ? process.env.http_proxy : process.env.HTTP_PROXY;
-            let httpsProxy = process.env.https_proxy ? process.env.https_proxy : process.env.HTTPS_PROXY;
+            const httpProxy = process.env.http_proxy ? process.env.http_proxy : process.env.HTTP_PROXY;
+            const httpsProxy = process.env.https_proxy ? process.env.https_proxy : process.env.HTTPS_PROXY;
 
-            let httpUrl = URL.parse(httpProxy);
-            let httpsUrl = URL.parse(httpsProxy);
+            const httpUrl = URL.parse(httpProxy);
+            const httpsUrl = URL.parse(httpsProxy);
 
             proxyConfig = {
                 http: httpUrl,
@@ -97,12 +96,12 @@ class Common {
         return proxyConfig;
     }
 
-    static csv2json(csv){
+    static csv2json(csv) {
         let array = [];
         let values = csv.split(',');
 
         for (let i=0; i<values.length; i++) {
-            let value = values[i].trim();
+            const value = values[i].trim();
             if (value) {
                 array.push(value);
             }
@@ -110,20 +109,14 @@ class Common {
         return array;
     }
     
-    static sendMessage(node, result, payload, msg){  
-        msg.result = result;
-        msg.payload = payload; 
-        node.send(msg); 
-    }
-
     static readClientCertificate(node, config) {
             
-            let certType = config.certType;
-            let pfxCertPath = config.pfxCertPath; 
-            let pemCertPath = config.pemCertPath; 
-            let pemKeyPath = config.pemKeyPath; 
-            let passPhrase = config.passPhrase; 
-            let caCertPath = config.caCertPath;
+            const certType = config.certType;
+            const pfxCertPath = config.pfxCertPath;
+            const pemCertPath = config.pemCertPath;
+            const pemKeyPath = config.pemKeyPath;
+            const passPhrase = config.passPhrase;
+            const caCertPath = config.caCertPath;
             let certOptions = null;
             
             if (!config.pfxCertPath && !config.pemCertPath) {
@@ -137,7 +130,7 @@ class Common {
                     passphrase: passPhrase,
                     ca: fs.readFileSync(caCertPath)
                 };
-            } else if (certType === "CERT_TYPE_PEM"){
+            } else if (certType === "CERT_TYPE_PEM") {
                 certOptions = {
                     cert: fs.readFileSync(pemCertPath),
                     key: fs.readFileSync(pemKeyPath),
@@ -148,6 +141,12 @@ class Common {
             }
                                      
             return certOptions;
+    }
+    
+    static sendMessage(node, result, payload, msg) {  
+        msg.result = result;
+        msg.payload = payload; 
+        node.send(msg); 
     }
 }
 

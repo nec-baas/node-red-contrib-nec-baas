@@ -1,7 +1,7 @@
 /**
  * NEC Mobile Backend Platform
  *
- * Copyright (c) 2014-2016 NEC Corporation
+ * Copyright (c) 2014-2017 NEC Corporation
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -16,7 +16,36 @@
  * limitations under the License.
  */
  
- <script type="text/javascript">
+ <script type="text/x-red" data-template-name="nebula-server">
+
+    <div class="form-row">
+        <label for="node-config-input-name"><i class="fa fa-tag"></i> <span data-i18n="nebula.label.name"></span></label>
+        <input type="text" id="node-config-input-name" data-i18n="[placeholder]nebula.placeholder.name">
+    </div>
+    <div class="form-row">
+        <label for="node-config-input-tenantId"><i class="icon-tag"></i> <span data-i18n="nebula.label.tenant"></span></label>
+        <input type="text" id="node-config-input-tenantId">
+    </div>
+    <div class="form-row">
+        <label for="node-config-input-appId"><i class="icon-tag"></i> <span data-i18n="nebula.label.app-id"></span></label>
+        <input type="text" id="node-config-input-appId">
+    </div>
+    <div class="form-row">
+        <label for="node-config-input-appKey"><i class="fa fa-lock"></i> <span data-i18n="nebula.label.app-key"></span></label>
+        <input type="text" id="node-config-input-appKey">
+    </div>
+    <div class="form-row">
+        <label for="node-config-input-baseUri"><i class="fa fa-globe"></i> <span data-i18n="nebula.label.base-uri"></span></label>
+        <input type="text" id="node-config-input-baseUri" data-i18n="[placeholder]nebula.placeholder.base-uri">
+    </div>
+    <p style="margin-bottom:1em;">
+    <div class="form-row" style="visibility: hidden;">
+        <label for="node-config-input-useProxy"><i class="fa fa-check"></i> <span data-i18n="nebula.label.use-proxy"></span></label>
+        <input type="checkbox" id="node-config-input-useProxy" style="width: auto;" checked="checked">
+    </div>
+</script>
+
+<script type="text/javascript">
     'use restrict';
     
     RED.nodes.registerType('nebula-server', {
@@ -44,32 +73,5 @@
     });
 </script>
 
-<script type="text/x-red" data-template-name="nebula-server">
 
-    <div class="form-row">
-        <label for="node-config-input-name"><i class="fa fa-tag"></i> <span data-i18n="nebula.label.name"></span></label>
-        <input type="text" id="node-config-input-name" data-i18n="[placeholder]nebula.placeholder.name">
-    </div>
-    <div class="form-row">
-        <label for="node-config-input-tenantId"><i class="icon-tag"></i> <span data-i18n="nebula.label.tenant"></span></label>
-        <input type="text" id="node-config-input-tenantId">
-    </div>
-    <div class="form-row">
-        <label for="node-config-input-appId"><i class="icon-tag"></i> <span data-i18n="nebula.label.app-id"></span></label>
-        <input type="text" id="node-config-input-appId">
-    </div>
-    <div class="form-row">
-        <label for="node-config-input-appKey"><i class="fa fa-lock"></i> <span data-i18n="nebula.label.app-key"></span></label>
-        <input type="text" id="node-config-input-appKey">
-    </div>
-    <div class="form-row">
-        <label for="node-config-input-baseUri"><i class="fa fa-globe"></i> <span data-i18n="nebula.label.base-uri"></span></label>
-        <input type="text" id="node-config-input-baseUri" data-i18n="[placeholder]nebula.placeholder.base-uri">
-    </div>
-    <p style="margin-bottom:1em;">
-    <div class="form-row" style="visibility: hidden;">
-        <label for="node-config-input-useProxy"><i class="fa fa-check"></i> <span data-i18n="nebula.label.use-proxy"></span></label>
-        <input type="checkbox" id="node-config-input-useProxy" style="width: auto;">
-    </div>
-</script>
 

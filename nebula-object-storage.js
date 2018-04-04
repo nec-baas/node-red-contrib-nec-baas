@@ -16,7 +16,7 @@
 /**
  * NEC Mobile Backend Platform
  *
- * Copyright (c) 2014-2016 NEC Corporation
+ * Copyright (c) 2014-2017 NEC Corporation
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -35,10 +35,10 @@ module.exports = function (RED) {
     "use strict";
     const Common = require('./nebula-common');
     
-    function createClause(selectType, key, value, option, nb, node) {
-        var clause = null;
+    const createClause = function(selectType, key, value, option, nb, node) {
+        let clause = null;
         
-        if(!selectType || !key) {
+        if (!selectType || !key) {
             return clause;
         }        
                 
@@ -62,7 +62,7 @@ module.exports = function (RED) {
             clause = nb.Clause.greaterThanOrEqual(key, value);
             break;
         case "exist":
-            var flag = Boolean(value);
+            const flag = Boolean(value);
             clause = nb.Clause.exist(key, flag);
             break;
         case "regex":
@@ -79,14 +79,14 @@ module.exports = function (RED) {
         return clause;
     }
 
-    function joinClause(operator, array, size, nb, node) {
-        var clause = null;
+    const joinClause = function(operator, array, size, nb, node) {
+        let clause = null;
         
-        if(size === 0 || !array) {
+        if (size === 0 || !array) {
             return clause;
         }        
         
-        if(size === 1) {
+        if (size === 1) {
             clause = array[0];
             return clause;
         }   
@@ -100,251 +100,251 @@ module.exports = function (RED) {
         return clause;
     }
     
-    function NebulaObjectInNode(n) {
-        RED.nodes.createNode(this,n);
-        var node = this;
-        this.name = n.name;
-        this.func = n.func;
-
-        var nebulaBucketName = n.bucketName;
-        
-        this.rules = n.rules || [];
-        
-        for (var i=0; i<this.rules.length; i++) {
-            var rule = this.rules[i];
-            if (!rule.vt) {
-                if (!isNaN(Number(rule.v))) {
-                    rule.vt = 'num';
-                } else {
-                    rule.vt = 'str';
-                }
+    const buildClause = function(nb, node, msg) {  
+        const rulenum = node.rules.length;
+        let clauseArray = new Array(rulenum);
+        let validCount = 0;
+        for (let i=0; i < rulenum; i++) {
+            const rule = node.rules[i];
+            const key = rule.k;
+            const selectType = rule.t;
+            const inputType = rule.vt;
+            const value = rule.v;
+            let caseFlag;
+            if (selectType === "regex") {
+                caseFlag = rule.case;
             }
-            if (rule.vt === 'num') {
-                if (!isNaN(Number(rule.v))) {
-                    rule.v = Number(rule.v);
-                }
+            // Convert msg.payload to value.
+            const evaluatedValue = RED.util.evaluateNodeProperty(value, inputType, node, msg); 
+            
+            const clause = createClause(selectType, key, evaluatedValue, caseFlag, nb, node);
+            if (clause === null) { // Skip the clause if the key is null.
+                node.warn("Clause property is Invalid (selectType, key, etc.)");
+            } else {
+                clauseArray[validCount] = clause;
+                validCount++;
             }
         }
         
-        var isClause = n.isClause;
-        var operator = n.operator;
-        var sortKey = n.sortKey;
-        var sortType = n.sortType;
-        var skipCount = n.skipCount;
-        var limit = n.limit;
-        var projection = n.projection;
-        var bucket = null;
-        var oldBucketName = null;
+        return joinClause(node.operator, clauseArray, validCount, nb, node);
+    }
+    
+    const queryObject = function(query, node, msg) {  
+        node.bucket.query(query)
+            .then(function(obj) {
+                Common.sendMessage(node, "ok", obj, msg);
+            })
+            .catch (function(error) {
+                Common.sendMessage(node, "failed", error, msg);
+            });
+    }
+    
+    const buildProjection = function(node, msg) { 
+        const tmpProjection = JSON.parse(node.projection);
+        let evalProjection = {};
+        
+        for (let tmpKey in tmpProjection) {
+            const strValue = tmpProjection[tmpKey];
+            // Convert string to number.
+            const numValue = RED.util.evaluateNodeProperty(strValue, 'num', node, null); 
+            evalProjection[tmpKey] = numValue;
+        }
+        
+        return evalProjection;
+    }
+    
+    function NebulaObjectInNode(config) {
+        RED.nodes.createNode(this,config);
+
+        this.bucketName = config.bucketName;
+        this.rules = config.rules || [];
+
+        this.isClause = config.isClause;
+        this.operator = config.operator;
+        this.sortKey = config.sortKey;
+        this.sortType = config.sortType;
+        this.skipCount = config.skipCount;
+        this.limit = config.limit;
+        this.projection = config.projection;
+        this.bucket = null;
+        this.oldBucketName = null;
+        const node = this;
         
         this.on('input', function(msg) {
-            var Nebula = this.context().flow.get('Nebula'); 
-            //node.log("msg.payload: " + JSON.stringify(msg.payload));
+            const nb = node.context().flow.get('Nebula'); 
                        
             try {
                 // Use the value of 'msg.bucketname' if the 'msg.bucketname' has a backet name.
-                var bucketName = msg.bucketname ? msg.bucketname : nebulaBucketName;
+                const bucketName = msg.hasOwnProperty('bucketname') ? msg.bucketname : config.bucketName;
                 if (!bucketName) { // null or 'undefined'
-                    throw("Invalid bucketname");
+                    throw RED._("nebula.errors.invalid-bucketname");
                 }
-
-                if (bucketName !== oldBucketName) {
-                    oldBucketName = bucketName;
-                    bucket = new Nebula.ObjectBucket(bucketName);
+                if (bucketName !== node.oldBucketName) {
+                    node.oldBucketName = bucketName;
+                    node.bucket = new nb.ObjectBucket(bucketName);
                 }
-                
-                var query = new Nebula.ObjectQuery();
+                const query = new nb.ObjectQuery();
  
                 // Enable clause
-                if (isClause) {
-                    var rulenum = node.rules.length;
-                    var clauseArray = new Array(rulenum);
-                    var validCount = 0;
-                    for (var i=0; i < rulenum; i++) {
-                        var rule = node.rules[i];
-                        var key = rule.k;
-                        var selectType = rule.t;
-                        var inputType = rule.vt;
-                        var value = rule.v;
-                        var caseFlag;
-                        if (selectType === "regex") {
-                            caseFlag = rule.case;
-                        }
-                        // Convert msg.payload to value.
-                        var evaluatedValue = RED.util.evaluateNodeProperty(value, inputType, node, msg); 
-                        
-                        var tmp = createClause(selectType, key, evaluatedValue, caseFlag, Nebula, node);
-                        if (tmp === null) {　// Skip the clause if the key is null.
-                            node.warn("Clause property is Invalid (selectType, key, etc.)");
-                        } else {
-                            clauseArray[validCount] = tmp;
-                            validCount++;
-                        }
-                    }
-                    var clause = joinClause(operator, clauseArray, validCount, Nebula, node);
+                if (node.isClause) {
+                    const clause = buildClause(nb, node, msg);
                     if (clause) {
                         query.setClause(clause); 
                     } else {
-                        node.warn("NebulaObjectInNode: no clause");
+                        node.warn(RED._("clause-not-found"));
                     }
-
                 } else {
                     // get all objects
                 }
-                
-                if (sortKey) {
-                    if (sortType === "ASC") {
-                        query.setSortOrder(sortKey, true);
+     
+                if (node.sortKey) {
+                    if (node.sortType === "ASC") {
+                        query.setSortOrder(node.sortKey, true);
                     } else { // DESC
-                        query.setSortOrder(sortKey, false);
+                        query.setSortOrder(node.sortKey, false);
                     }
                 }
 
-                if (skipCount) {
-                    var numSkip = RED.util.evaluateNodeProperty(skipCount, 'num', node, msg); 
+                if (node.skipCount) {
+                    const numSkip = RED.util.evaluateNodeProperty(node.skipCount, 'num', node, msg); 
                     query.setSkipCount(numSkip);
                 }
 
-                if (limit) {
-                    var numLimit = RED.util.evaluateNodeProperty(limit, 'num', node, msg); 
+                if (node.limit) {
+                    const numLimit = RED.util.evaluateNodeProperty(node.limit, 'num', node, msg); 
                     query.setLimit(numLimit);
                 } else {   
                     query.setLimit(100);
                 }
-                
-                if (projection) {
-                    try {
-                        var tmpProjection = JSON.parse(projection);
-                        var evalProjection = {};
-                        
-                        for (var tmpKey in tmpProjection) {
-                            var strValue = tmpProjection[tmpKey];
-                            // Convert string to number.
-                            var numValue = RED.util.evaluateNodeProperty(strValue, 'num', node, null); 
-                            evalProjection[tmpKey] = numValue;
-                        }
-                        
-                        query.setProjection(evalProjection);
-                        
-                    } catch(err) {
-                        throw "Invalid 'projection'. Check the json format.";                    
-                    }               
-                }
-                //node.log("query: " + JSON.stringify(query));
 
-                bucket.query(query)
-                    .then(function(obj) {
-                        Common.sendMessage(node, "ok", obj, msg);
-                    })
-                    .catch (function(error) {
-                        Common.sendMessage(node, "failed", error, msg);
-                    });
+                if (node.projection) {
+                   try {
+                        const projection = buildProjection(node, msg);
+                        query.setProjection(projection);
+                    } catch(err) {
+                        throw RED._("nebula.errors.invalid-projection");
+                    }
+                }
+
+                queryObject(query, node, msg);
             } catch(err) {
                 node.warn(err);
             }
         });
     }
     RED.nodes.registerType("object in", NebulaObjectInNode);
+    
+    const createBucket = function(nb, node, bucketName, msg) {   
+        // Create a bucket if no bucket exists.
+        node.warn(RED._("nebula.info.try-to-create-a-new-bucket") + "('" + bucketName + "') ...");
+        node.bucket = new nb.ObjectBucket(bucketName); // Set new bucketName
+        node.bucket.saveBucket()
+        .then(function() {
+            node.warn(RED._("nebula.info.succeeded-in-creating-a-new-bucket"));
+        })
+        .catch(function(error) {
+            node.error(RED._("nebula.errors.failed-to-create-a-new-bucket"));
+        });
+    }
+      
+    const saveObject = function(nb, node, bucketName, payload, msg) {  
+        node.bucket.save(payload)
+        .then(function(obj) {
+            Common.sendMessage(node, "ok", obj, msg);
+        })
+        .catch(function (error) {                         
+            if (error.status === 404 && error.responseText === "{\"error\":\"No such bucket\"}") {
+                if (node.createBucket) {  
+                    createBucket(nb, node, bucketName, msg);
+                }
+            }
+            Common.sendMessage(node, "failed", error, msg);
+        });
+    }            
+                    
+    const deleteObject = function(objectId, node, msg) {                    
+        node.bucket.remove(objectId)
+        .then(function(objid) {
+            Common.sendMessage(node, "ok", objid, msg);
+        })
+        .catch(function(error) {
+            Common.sendMessage(node, "failed", error, msg);
+        });
+    } 
+                    
+    const deleteAllObjects = function(nb, node, msg) {
+        // Query all objects.
+        const query = new nb.ObjectQuery();
+        query.setLimit(-1);
+        node.bucket.query(query)
+        .then(function(objects) {
+            const length = objects.length;
+            if (length === 0) {
+                throw RED._("nebula.errors.object-not-found");
+            }
 
+            // Delete all objects.
+            for (let i=0; i<length; i++) {
+                const id = objects[i]._id;
+
+                node.bucket.remove(id)
+                .then(function(objid) {
+                    Common.sendMessage(node, "ok", objid, msg);
+                })
+                .catch(function(error) {
+                    Common.sendMessage(node, "failed", error, msg);
+                });
+            }
+        })
+        .catch(function(error) {
+            Common.sendMessage(node, "failed", error, msg);
+        });
+    }   
+                    
+    const deleteBucket = function(node, msg) {
+        node.bucket.deleteBucket()
+        .then(function(obj) {
+            Common.sendMessage(node, "ok", obj, msg);
+        })
+        .catch(function (error) {
+            Common.sendMessage(node, "failed", error, msg);
+        });
+    }
+    
     function NebulaObjectOutNode(config) {
         RED.nodes.createNode(this,config);
-        var node = this;
-        this.name = config.name;
-        this.func = config.func;
-                
-        var nebulaBucketName = config.bucketName;
-        var createBucket = config.createBucket;
-        var action = config.action;
-        var bucket = null;
-        var oldBucketName = null;   
+
+        this.bucketName = config.bucketName;
+        this.createBucket = config.createBucket;
+        this.action = config.action;
+        this.bucket = null;
+        this.oldBucketName = null;   
+        const node = this;
         
         this.on('input', function(msg) {
-            var Nebula = this.context().flow.get('Nebula');
-            var payload = msg.payload;
-            //node.log("payload: " + JSON.stringify(payload));
+            const nb = node.context().flow.get('Nebula');
+            const payload = msg.payload;
 
             try {         
                 // Use the value of 'msg.bucketname' if the 'msg.bucketname' has a backet name.
-                var bucketName = msg.bucketname ? msg.bucketname : nebulaBucketName;
+                const bucketName = msg.hasOwnProperty('bucketname') ? msg.bucketname : config.bucketName;
                 if (!bucketName) { // null or undefined
-                    throw("Invalid bucketname");
-                }
-                               
-                var objectId = msg.objectId ? msg.objectId : null;
-                      
-                if (bucketName !== oldBucketName) {
-                    oldBucketName = bucketName;
-                    bucket = new Nebula.ObjectBucket(bucketName);
+                    throw RED._("nebula.errors.invalid-bucketname");
+                }    
+                if (bucketName !== node.oldBucketName) {
+                    node.oldBucketName = bucketName;
+                    node.bucket = new nb.ObjectBucket(bucketName);
                 }
                 
-                if (action === "SAVE_OBJECT") { 
-                    bucket.save(payload)
-                    .then(function(obj) {
-                        Common.sendMessage(node, "ok", obj, msg);
-                    })
-                    .catch(function (error) {                         
-                        if (error.status === 404 && error.responseText === "{\"error\":\"No such bucket\"}") {
-                            if (createBucket) {  
-                                // Create a bucket if no bucket exists.
-                                node.warn("Try to create a new bucket('" + bucketName + "') ...");
-                                bucket = new Nebula.ObjectBucket(bucketName); // Set new bucketName
-                                bucket.saveBucket()
-                                .then(function() {
-                                    node.warn("Succeeded in creating a new bucket.");
-                                })
-                                .catch(function(error) {
-                                    node.error("Failed to create a new bucket.");
-                                });
-                            }
-                        }
-                        Common.sendMessage(node, "failed", error, msg);
-                    });
-
-                } else if (action === "DEL_OBJECT") {
-                    
-                    //node.log("objectId: " + objectId);
-                    bucket.remove(objectId)
-                    .then(function(objid) {
-                        Common.sendMessage(node, "ok", objid, msg);
-                    })
-                    .catch(function(error) {
-                        Common.sendMessage(node, "failed", error, msg);
-                    });
-                    
-                } else if (action === "DEL_ALL_OBJECTS") { 
-                    // Query all objects.
-                    var query = new Nebula.ObjectQuery();
-                    query.setLimit(-1);
-                    bucket.query(query)
-                    .then(function(objects) {
-                        var length = objects.length;
-                        if (length === 0) {
-                            throw RED._("nebula.errors.object-not-found");
-                        }
-
-                        // Delete all objects.
-                        for (var i=0; i<length; i++) {
-                            var id = objects[i]._id;
-                            //node.log("objectId: " + id);
-                            bucket.remove(id)
-                            .then(function(objid) {
-                                Common.sendMessage(node, "ok", objid, msg);
-                            })
-                            .catch(function(error) {
-                                Common.sendMessage(node, "failed", error, msg);
-                            });
-                        }
-                    })
-                    .catch(function(error) {
-                        Common.sendMessage(node, "failed", error, msg);
-                    });
-                } else if (action === "DEL_BUCKET") {
-                    bucket.deleteBucket()
-                    .then(function(obj) {
-                        Common.sendMessage(node, "ok", obj, msg);
-                    })
-                    .catch(function (error) {
-                        Common.sendMessage(node, "failed", error, msg);
-                    });
+                if (node.action === "SAVE_OBJECT") { 
+                    saveObject(nb, node, bucketName, payload, msg);
+                } else if (node.action === "DEL_OBJECT") {
+                    const objectId = msg.hasOwnProperty('objectId') ? msg.objectId : null;
+                    deleteObject(objectId, node, msg);  
+                } else if (node.action === "DEL_ALL_OBJECTS") { 
+                    deleteAllObjects(nb, node, msg);
+                } else if (node.action === "DEL_BUCKET") {
+                    deleteBucket(node, msg);
                 } else {
                     // do nothing.
                 }

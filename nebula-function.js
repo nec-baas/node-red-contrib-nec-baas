@@ -43,11 +43,11 @@ module.exports = function (RED) {
         } else if (!util.isArray(msgs)) {
             msgs = [msgs];
         }
-        var msgCount = 0;
-        for (var m=0;m<msgs.length;m++) {
+        let msgCount = 0;
+        for (let m=0; m<msgs.length; m++) {
             if (msgs[m]) {
                 if (util.isArray(msgs[m])) {
-                    for (var n=0; n < msgs[m].length; n++) {
+                    for (let n=0; n < msgs[m].length; n++) {
                         msgs[m][n]._msgid = _msgid;
                         msgCount++;
                     }
@@ -64,10 +64,10 @@ module.exports = function (RED) {
 
     function NebulaFunctionNode(config) {
         RED.nodes.createNode(this,config);
-        var node = this;
+        const node = this;
         this.name = config.name;
         this.func = config.func;
-        var functionText = "var results = null;"+
+        const functionText = "var results = null;"+
                            "results = (function(msg){ "+
                               "var __msgid__ = msg._msgid;"+
                               "var node = {"+
@@ -83,15 +83,15 @@ module.exports = function (RED) {
 
         this.topic = config.topic;
         this.outstandingTimers = [];
-        this.outstandingIntervals = [];          
- 
-        var stringify = function (obj) {
+        this.outstandingIntervals = [];
+
+        const stringify = function (obj) {
             return (typeof obj === 'string') ? "'" + obj + "'" : obj;
-        }
-        
-        var initFlag = config.initFlag;
-        var nebulaServer = RED.nodes.getNode(config.nebulaServer);
-            
+        };
+
+        const initFlag = config.initFlag;
+        const nebulaServer = RED.nodes.getNode(config.nebulaServer);
+
         try {   
             if (initFlag) {
                 Common.initNebula(node, this.context(), nebulaServer);
@@ -101,42 +101,42 @@ module.exports = function (RED) {
         } catch(err) {
             this.error(err);
         }
-        
-        var sandbox = {
-            console:console,
-            util:util,
-            nebula:{
-                get: function() {
+
+        const sandbox = {
+            console: console,
+            util: util,
+            nebula: {
+                get: function () {
                     return node.context().flow.get('Nebula');
                 }
             },
-            Buffer:Buffer,
+            Buffer: Buffer,
             __node__: {
-                log: function() {
+                log: function () {
                     node.log.apply(node, arguments);
                 },
-                error: function() {
+                error: function () {
                     node.error.apply(node, arguments);
                 },
-                warn: function() {
+                warn: function () {
                     node.warn.apply(node, arguments);
                 },
-                send: function(id, msgs) {
+                send: function (id, msgs) {
                     sendResults(node, id, msgs);
                 },
-                on: function() {
+                on: function () {
                     node.on.apply(node, arguments);
                 },
-                status: function() {
+                status: function () {
                     node.status.apply(node, arguments);
                 }
             },
             context: {
-                set: function() {
-                    node.context().set.apply(node,arguments);
+                set: function () {
+                    node.context().set.apply(node, arguments);
                 },
-                get: function() {
-                    return node.context().get.apply(node,arguments);
+                get: function () {
+                    return node.context().get.apply(node, arguments);
                 },
                 get global() {
                     return node.context().global;
@@ -146,87 +146,85 @@ module.exports = function (RED) {
                 }
             },
             flow: {
-                set: function() {
-                    node.context().flow.set.apply(node,arguments);
+                set: function () {
+                    node.context().flow.set.apply(node, arguments);
                 },
-                get: function() {
-                    return node.context().flow.get.apply(node,arguments);
+                get: function () {
+                    return node.context().flow.get.apply(node, arguments);
                 }
             },
             global: {
-                set: function() {
-                    node.context().global.set.apply(node,arguments);
+                set: function () {
+                    node.context().global.set.apply(node, arguments);
                 },
-                get: function() {
-                    return node.context().global.get.apply(node,arguments);
+                get: function () {
+                    return node.context().global.get.apply(node, arguments);
                 }
             },
             setTimeout: function () {
-                var func = arguments[0];
-                var timerId;
-                arguments[0] = function() {
+                const func = arguments[0];
+                arguments[0] = function () {
                     sandbox.clearTimeout(timerId);
                     try {
-                        func.apply(this,arguments);
-                    } catch(err) {
-                        node.error(err,{});
+                        func.apply(this, arguments);
+                    } catch (err) {
+                        node.error(err, {});
                     }
                 };
-                timerId = setTimeout.apply(this,arguments);
+                const timerId = setTimeout.apply(this, arguments);
                 node.outstandingTimers.push(timerId);
                 return timerId;
             },
-            clearTimeout: function(id) {
+            clearTimeout: function (id) {
                 clearTimeout(id);
-                var index = node.outstandingTimers.indexOf(id);
+                const index = node.outstandingTimers.indexOf(id);
                 if (index > -1) {
-                    node.outstandingTimers.splice(index,1);
+                    node.outstandingTimers.splice(index, 1);
                 }
             },
-            setInterval: function() {
-                var func = arguments[0];
-                var timerId;
-                arguments[0] = function() {
+            setInterval: function () {
+                const func = arguments[0];
+                arguments[0] = function () {
                     try {
-                        func.apply(this,arguments);
-                    } catch(err) {
-                        node.error(err,{});
+                        func.apply(this, arguments);
+                    } catch (err) {
+                        node.error(err, {});
                     }
                 };
-                timerId = setInterval.apply(this,arguments);
+                const timerId = setInterval.apply(this, arguments);
                 node.outstandingIntervals.push(timerId);
                 return timerId;
             },
-            clearInterval: function(id) {
+            clearInterval: function (id) {
                 clearInterval(id);
-                var index = node.outstandingIntervals.indexOf(id);
+                const index = node.outstandingIntervals.indexOf(id);
                 if (index > -1) {
-                    node.outstandingIntervals.splice(index,1);
+                    node.outstandingIntervals.splice(index, 1);
                 }
             }
         };
-        var context = vm.createContext(sandbox);
+        const context = vm.createContext(sandbox);
         try {
             this.script = vm.createScript(functionText);
             this.on("input", function(msg) {
             
                 try {
-                    var start = process.hrtime();
+                    const start = process.hrtime();
                     context.msg = msg;
                     this.script.runInContext(context);
                     sendResults(this,msg._msgid,context.results);
 
-                    var duration = process.hrtime(start);
-                    var converted = Math.floor((duration[0] * 1e9 + duration[1])/10000)/100;
+                    const duration = process.hrtime(start);
+                    const converted = Math.floor((duration[0] * 1e9 + duration[1]) / 10000) / 100;
                     this.metric("duration", msg, converted);
                     if (process.env.NODE_RED_FUNCTION_TIME) {
                         this.status({fill:"yellow",shape:"dot",text:""+converted});
                     }
                 } catch(err) {
 
-                    var line = 0;
-                    var errorMessage;
-                    var stack = err.stack.split(/\r?\n/);
+                    let line = 0;
+                    let errorMessage;
+                    const stack = err.stack.split(/\r?\n/);
                     if (stack.length > 0) {
                         while (line < stack.length && stack[line].indexOf("ReferenceError") !== 0) {
                             line++;
@@ -234,10 +232,10 @@ module.exports = function (RED) {
 
                         if (line < stack.length) {
                             errorMessage = stack[line];
-                            var m = /:(\d+):(\d+)$/.exec(stack[line+1]);
+                            const m = /:(\d+):(\d+)$/.exec(stack[line + 1]);
                             if (m) {
-                                var lineno = Number(m[1])-1;
-                                var cha = m[2];
+                                const lineno = Number(m[1]) - 1;
+                                const cha = m[2];
                                 errorMessage += " (line "+lineno+", col "+cha+")";
                             }
                         }

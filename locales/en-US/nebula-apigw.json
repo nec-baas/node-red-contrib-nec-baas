@@ -10,13 +10,13 @@
             "headers": "Headers",
             "addHeaders": "Add Headers?",
             "clearHeaders": "Clear Headers?",
-            "contentType": "content-Type:",
+            "contentType": "content-Type",
             "response": "Response",
             "binaryResp": "Use Binary Response?"
         },
         "placeholder": {
             "name": "Name of this Node",
-            "apidata": "e.g. JSON String, plain text String",
+            "apidata": "e.g. JSON string, plain text string",
             "contentType": "text/html"
         },
         "tip": "",

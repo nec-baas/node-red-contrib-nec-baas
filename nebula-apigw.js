@@ -1,7 +1,7 @@
 /**
  * NEC Mobile Backend Platform
  *
- * Copyright (c) 2014-2016 NEC Corporation
+ * Copyright (c) 2014-2017 NEC Corporation
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -19,110 +19,96 @@
 module.exports = function (RED) {
     "use strict";
     const Common = require('./nebula-common');
-    
+
+    const executeApi = function(api, node, msg) {
+        api.execute(node.apidata)
+            .then(function (result) {
+                if (node.isJsonResponse && !node.isBinary) {
+                    result = JSON.parse(result);
+                }
+                Common.sendMessage(node, "ok", result, msg);
+            })
+            .catch (function(error) {
+                Common.sendMessage(node, "failed", error, msg);
+            });
+    };
+
     function NebulaApigwOutNode(config) {
         RED.nodes.createNode(this,config);
-        var node = this;
-        this.name = config.name;
-        this.func = config.func;
 
-        var apiname = config.apiname;
-        var method = config.method;
-        var subpath = config.subpath;
-        var apidata = config.apidata;
-        var isJsonRequest = config.isJsonRequest;    
+        this.apiname = config.apiname;
+        this.method = config.method;
+        this.subpath = config.subpath;
+        this.apidata = config.apidata;
+        this.isJsonRequest = config.isJsonRequest;    
         
-        var isAddHeaders = config.isAddHeaders;
-        var isClearHeaders = config.isClearHeaders;
-        var contentType = config.contentType;
-        
-        var isJsonResponse = config.isJsonResponse;      
-        var isBinary = config.isBinaryResponse;        
+        this.isAddHeaders = config.isAddHeaders;
+        this.isClearHeaders = config.isClearHeaders;
+        this.contentType = config.contentType;
+        this.isJsonResponse = config.isJsonResponse;      
+        this.isBinary = config.isBinaryResponse;        
                 
         this.rules = config.rules || [];
-
-        for (var i=0; i<this.rules.length; i++) {
-            var rule = this.rules[i];
-            if (!rule.vt) {
-                if (!isNaN(Number(rule.v))) {
-                    rule.vt = 'num';
-                } else {
-                    rule.vt = 'str';
-                }
-            }
-            if (rule.vt === 'num') {
-                if (!isNaN(Number(rule.v))) {
-                    rule.v = Number(rule.v);
-                }
-            }
-        }
+        const node = this;
 
         this.on('input', function(msg) {
-            var Nebula = this.context().flow.get('Nebula');
+            const nb = node.context().flow.get('Nebula');
 
             try {
                 // Use the value of 'msg.xxx' if the 'msg.xxx' has the property.
-                apiname = msg.apiname ? msg.apiname : apiname;
-                method = msg.method ? msg.method : method;
-                subpath = msg.subpath ? msg.subpath : subpath;
-                apidata = msg.apidata ? msg.apidata : (apidata ? apidata : {});
-                isBinary = msg.isBinaryResponse ? msg.isBinaryResponse : isBinary;
-                isClearHeaders = msg.header ? (msg.header.isClearHeaders ? msg.header.isClearHeaders : isClearHeaders) : isClearHeaders;
-                contentType = msg.header ? (msg.header.contentType ? msg.header.contentType : contentType) : contentType;
-                var addHeaders = msg.header ? (msg.header.addHeaders ? msg.header.addHeaders : {}) : {};
+                node.apiname = msg.hasOwnProperty('apiname') ? msg.apiname : config.apiname;
+                node.method = msg.hasOwnProperty('method') ? msg.method : config.method;
+                node.subpath = msg.hasOwnProperty('subpath') ? msg.subpath : config.subpath;
+                node.apidata = msg.hasOwnProperty('apidata') ? msg.apidata : (config.apidata ? config.apidata : {});
+                node.isBinary = msg.hasOwnProperty('isBinaryResponse') ? msg.isBinaryResponse : config.isBinaryResponse;
+                node.isClearHeaders = (msg.hasOwnProperty('header') && msg.header.hasOwnProperty('isClearHeaders')) ? 
+                                        msg.header.isClearHeaders : config.isClearHeaders;
+                node.contentType = (msg.hasOwnProperty('header') && msg.header.hasOwnProperty('contentType')) ? 
+                                        msg.header.contentType : config.contentType;
+                const addHeaders = (msg.hasOwnProperty('header') && msg.header.hasOwnProperty('addHeaders')) ? msg.header.addHeaders : {};
 
                 try { 
-                    if (isJsonRequest && typeof apidata  === "string") {
-                        apidata = JSON.parse(apidata);
+                    if (node.isJsonRequest && typeof node.apidata  === "string") {
+                        node.apidata = JSON.parse(node.apidata);
                     }
                 } catch(err) {
                     throw RED._("nebula.errors.invalid-apidata");                    
                 }
- 
-                var customApi = new Nebula.CustomApi(apiname, method, subpath);
-                
-                if (isBinary) {
+
+                const customApi = new nb.CustomApi(node.apiname, node.method, node.subpath);
+
+                if (node.isBinary) {
                     customApi.setBinaryResponse();
                 }
-                
+
                 if (Object.keys(addHeaders).length) {
-                    for (var headerKey in addHeaders) {
-                        var headerValue = addHeaders[headerKey];
+                    for (let headerKey in addHeaders) {
+                        const headerValue = addHeaders[headerKey];
                         customApi.addHeader(headerKey, headerValue);
                     }
                 } else {
-                    if (isAddHeaders) {
-                        for (var i = 0; i < node.rules.length; i++) {
-                            var rule = node.rules[i];
-                            var key = rule.k;
-                            var inputType = rule.vt;
-                            var value = rule.v;
+                    if (node.isAddHeaders) {
+                        for (let i = 0; i < node.rules.length; i++) {
+                            const rule = node.rules[i];
+                            const key = rule.k;
+                            const inputType = rule.vt;
+                            const value = rule.v;
                             // Convert msg.xxx property to value.
-                            var evaluatedValue = RED.util.evaluateNodeProperty(value, inputType, node, msg);
+                            const evaluatedValue = RED.util.evaluateNodeProperty(value, inputType, node, msg);
                             customApi.addHeader(key, evaluatedValue);
                         }
                     }
                 }
-                
-                if (isClearHeaders) {
+
+                if (node.isClearHeaders) {
                     customApi.clearHeaders();
                 }
 
-                if (contentType) {
-                    customApi.setContentType(contentType);
+                if (node.contentType) {
+                    customApi.setContentType(node.contentType);
                 }
-                //node.log("customApi: " + JSON.stringify(customApi));
 
-                customApi.execute(apidata)
-                    .then(function (result) {
-                        if (isJsonResponse && !isBinary) {
-                            result = JSON.parse(result);
-                        }
-                        Common.sendMessage(node, "ok", result, msg);
-                    })
-                    .catch (function(error) {
-                        Common.sendMessage(node, "failed", error, msg);
-                    });
+                executeApi(customApi, node, msg);
                 
             } catch(err) {
                 node.warn(err);

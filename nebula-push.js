@@ -1,7 +1,7 @@
 /**
  * NEC Mobile Backend Platform
  *
- * Copyright (c) 2014-2016 NEC Corporation
+ * Copyright (c) 2014-2017 NEC Corporation
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -20,81 +20,86 @@ module.exports = function (RED) {
     "use strict";
     const Common = require('./nebula-common');
        
+    const sendPush = function(push, node, msg) {
+        push.send()
+            .then(function(numInstallations) {
+                Common.sendMessage(node, "ok", numInstallations, msg);
+            })
+            .catch(function(error) {
+                Common.sendMessage(node, "failed", error, msg);
+            });
+    };
+       
     function NebulaPushOutNode(config) {
         RED.nodes.createNode(this,config);
-        var node = this;
-        this.name = config.name;
-        this.func = config.func;
         
-        var channelList = config.channels;
-        var receiverList = config.receivers;
-        var pushMessage = config.message;
+        this.isGCM = config.gcm;
+        this.isAPNS = config.apns;
+        this.isSSE = config.sse;
         
-        var isGCM = config.gcm;
-        var isAPNS = config.apns;
-        var isSSE = config.sse;
-        
-        var gcmTitle = config.gcmTitle;
-        var gcmUri = config.gcmUri;
+        this.gcmTitle = config.gcmTitle;
+        this.gcmUri = config.gcmUri;
             
-        var apnsBadge = config.apnsBadge;
-        var apnsCategory = config.apnsCategory;
-        var apnsSound = config.apnsSound;
+        this.apnsBadge = config.apnsBadge;
+        this.apnsCategory = config.apnsCategory;
+        this.apnsSound = config.apnsSound;
             
-        var sseEventId = config.sseEventId;
-        var sseEventType = config.sseEventType;
+        this.sseEventId = config.sseEventId;
+        this.sseEventType = config.sseEventType;
+        
+        const node = this;
         
         this.on('input', function(msg) {
-            var Nebula = this.context().flow.get('Nebula');
+            const nb = node.context().flow.get('Nebula');
                         
             try {         
                 // Use the value of 'msg.message' if the 'msg.message' has the message.
-                var message = msg.message ? msg.message : pushMessage;
+                const message = msg.hasOwnProperty('message') ? msg.message : config.message;
                 if (!message) {
                     throw RED._("nebula.errors.message-not-found"); 
                 }
                 
-                var channels = msg.channels ? msg.channels : (channelList ? Common.csv2json(channelList) : []);
-                var receivers = msg.receivers ? msg.receivers : (receiverList ? Common.csv2json(receiverList) : []);
+                const channels = msg.hasOwnProperty('channels') ? msg.channels : (config.channelList ? Common.csv2json(config.channelList) : []);
+                const receivers = msg.hasOwnProperty('receivers') ? msg.receivers : (config.receiverList ? Common.csv2json(config.receiverList) : []);
 
-                var push = new Nebula.PushSender();
+                const push = new nb.PushSender();
                 push.message = message;
 
-                isGCM = msg.gcm ? (msg.gcm.enabled ? msg.gcm.enabled : isGCM) : isGCM;
-                isAPNS = msg.apns ? (msg.apns.enabled ? msg.apns.enabled : isAPNS) : isAPNS;
-                isSSE = msg.sse ? (msg.sse.enabled ? msg.sse.enabled : isSSE) : isSSE;
+                node.isGCM = (msg.hasOwnProperty('gcm') && msg.gcm.hasOwnProperty('enabled')) ? msg.gcm.enabled : config.isGCM;
+                node.isAPNS = (msg.hasOwnProperty('apns') && msg.apns.hasOwnProperty('enabled')) ? msg.apns.enabled : config.isAPNS;
+                node.isSSE = (msg.hasOwnProperty('sse') && msg.sse.hasOwnProperty('enabled')) ? msg.sse.enabled : config.isSSE;
                 
-                if(isGCM) {
-                    var gcm = new Nebula.PushSender.GcmFields();
-                    gcm.title = msg.gcm ? (msg.gcm.title ? msg.gcm.title : gcmTitle) : gcmTitle;
-                    gcm.uri = msg.gcm ? (msg.gcm.uri ? msg.gcm.uri : gcmUri) : gcmUri;
+                if (node.isGCM) {
+                    const gcm = new nb.PushSender.GcmFields();
+                    gcm.title = (msg.hasOwnProperty('gcm') && msg.gcm.hasOwnProperty('title')) ? msg.gcm.title : config.gcmTitle;
+                    gcm.uri = (msg.hasOwnProperty('gcm') && msg.gcm.hasOwnProperty('uri')) ? msg.gcm.uri : config.gcmUri;
                     push.gcmFields = gcm;
                 }
 
-                if(isAPNS) {
-                    apnsBadge = msg.apns ? (msg.apns.badge ? msg.apns.badge : apnsBadge): apnsBadge;
+                if (node.isAPNS) {
+                    node.apnsBadge = (msg.hasOwnProperty('apns') && msg.apns.hasOwnProperty('badge')) ? msg.apns.badge : config.apnsBadge;
                     // Convert string to number.
-                    var apnsBadgeNumber = RED.util.evaluateNodeProperty(apnsBadge, 'num', node, null);   
+                    const apnsBadgeNumber = RED.util.evaluateNodeProperty(node.apnsBadge, 'num', node, null);   
                     
-                    var apns = new Nebula.PushSender.ApnsFields();
+                    const apns = new nb.PushSender.ApnsFields();
                     apns.badge = apnsBadgeNumber;
-                    apns.sound = msg.apns ? (msg.apns.sound ? msg.apns.sound : apnsSound) : apnsSound;
+                    apns.sound = (msg.hasOwnProperty('apns') && msg.apns.hasOwnProperty('sound')) ? msg.apns.sound : config.apnsSound;
                     apns.contentAvailable = 1;
-                    apns.category = msg.apns ? (msg.apns.category ? msg.apns.category : apnsCategory) : apnsCategory;
+                    apns.category = (msg.hasOwnProperty('apns') && msg.apns.hasOwnProperty('category')) ? msg.apns.category : config.apnsCategory;
                     push.apnsFields = apns;
                 }
 
-                if(isSSE) {
-                    var sse = new Nebula.PushSender.SseFields();
-                    sse.eventId = msg.sse ? (msg.sse.eventId ? msg.sse.eventId : sseEventId) : sseEventId;
-                    sse.eventType = msg.sse ? (msg.sse.eventType ? msg.sse.eventType : sseEventType) : sseEventType;
+                if (node.isSSE) {
+                    const sse = new nb.PushSender.SseFields();
+                    sse.eventId = (msg.hasOwnProperty('sse') && msg.sse.hasOwnProperty('eventId')) ? msg.sse.eventId : config.sseEventId;
+                    sse.eventType = (msg.hasOwnProperty('sse') && msg.sse.hasOwnProperty('eventType')) ? msg.sse.eventType : config.sseEventType;
                     push.sseFields = sse;
                 }
 
                 if (channels.length) {
-                    push.clause = new Nebula.Clause({"_channels": {"$in": channels}});
+                    push.clause = new nb.Clause({"_channels": {"$in": channels}});
                 } else {
-                    push.clause = new Nebula.Clause();
+                    push.clause = new nb.Clause();
                 }
                 
                 if (receivers.length) {
@@ -102,13 +107,7 @@ module.exports = function (RED) {
                 }
                 //node.log("push clause: " + JSON.stringify(push));
 
-                push.send()
-                    .then(function(numInstallations) {
-                        Common.sendMessage(node, "ok", numInstallations, msg);
-                    })
-                    .catch(function(error) {
-                        Common.sendMessage(node, "failed", error, msg);
-                    });
+                sendPush(push, node, msg);
                 
             } catch(err) {
                 node.warn(err);

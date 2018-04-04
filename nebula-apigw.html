@@ -1,7 +1,7 @@
 <!--
   NEC Mobile Backend Platform
 
-  Copyright (c) 2014-2016 NEC Corporation
+  Copyright (c) 2014-2017 NEC Corporation
 
   Licensed under the Apache License, Version 2.0 (the "License");
   you may not use this file except in compliance with the License.
@@ -18,7 +18,7 @@
 
 <script type="text/x-red" data-template-name="apigw out">
     <div class="form-row">
-        <label for="node-input-apiname"><i class="fa fa-wrench"></i> <span data-i18n="nebula.label.apiname"></span></label>
+        <label for="node-input-apiname"><i class="fa fa-tag"></i> <span data-i18n="nebula.label.apiname"></span></label>
         <input type="text" id="node-input-apiname">
     </div>
     <div class="form-row">
@@ -35,7 +35,7 @@
         <input type="text" id="node-input-subpath">
     </div>
     <div class="form-row">
-        <label for="node-input-apidata"><i class="fa fa-wrench"></i> <span data-i18n="nebula.label.apidata"></span></label>
+        <label for="node-input-apidata"><i class="fa fa-file"></i> <span data-i18n="nebula.label.apidata"></span></label>
         <input type="text" id="node-input-apidata" data-i18n="[placeholder]nebula.placeholder.apidata">
     </div>
     <div class="form-row">
@@ -125,7 +125,7 @@
     
     <h4>Header</h4>
     <p>Set the Header properties in the edit dialog, or it can be set by the following properties
-       on the incoming message. If the 'Clear' is checked, headers are cleared except for 'Content-Type'.</p>
+       on the incoming message. If the 'Clear Headers' is checked, headers are cleared except for 'Content-Type'.</p>
     <pre>
     msg.header = {
         addHeaders: {"header1":"aaa", "header2":"bbb", ...},
@@ -136,7 +136,7 @@
 
     <h4>Response</h4>
     <p>Set the Response property in the edit dialog, or it can be set by the following property
-       on the incoming message. If the 'Response' is checked, the registered API returns binary data.</p>
+       on the incoming message. If the 'Use Binary Response' is checked, the registered API returns binary data.</p>
     <pre>
     msg.isBinaryResponse = false;
     </pre>

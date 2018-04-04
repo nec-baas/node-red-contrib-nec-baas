@@ -1,7 +1,7 @@
 /**
  * NEC Mobile Backend Platform
  *
- * Copyright (c) 2014-2016 NEC Corporation
+ * Copyright (c) 2014-2017 NEC Corporation
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -22,8 +22,8 @@ module.exports = function (RED) {
     function NebulaServerNode(config) {
 
         RED.nodes.createNode(this, config);
-        var credentials = this.credentials;
-        var node = this;
+        const credentials = this.credentials;
+        const node = this;
 
         if (credentials) {
             node.nebulaConfig = {

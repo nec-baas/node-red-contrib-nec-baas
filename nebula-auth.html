@@ -16,7 +16,7 @@
 <!--
   NEC Mobile Backend Platform
 
-  Copyright (c) 2014-2016 NEC Corporation
+  Copyright (c) 2014-2017 NEC Corporation
 
   Licensed under the Apache License, Version 2.0 (the "License");
   you may not use this file except in compliance with the License.
@@ -120,7 +120,7 @@
                 $(".node-input-userInfo").show();
                 uncheckCertType();
                 hideCertItems();
-            } else if (action === "LOGOUT"){
+            } else if (action === "LOGOUT") {
                 $(".node-input-userInfo").hide();
                 uncheckCertType();
                 hideCertItems();
@@ -168,7 +168,7 @@
 </script>
 
 <script type="text/x-red" data-help-name="auth">
-    <p>A function that authenticates to the Nebula Server.</p>
+    <p>A function that authenticates to the NEC BaaS Server.</p>
 
     <h4>Incomming messages</h4>
     <p>Set the email (or username) and password in the edit dialog. If left blank it should be set 

@@ -16,7 +16,7 @@
 /**
  * NEC Mobile Backend Platform
  *
- * Copyright (c) 2014-2016 NEC Corporation
+ * Copyright (c) 2014-2017 NEC Corporation
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -35,28 +35,58 @@ module.exports = function (RED) {
     "use strict";
     const Common = require('./nebula-common');
 
+    const login = function(nb, userInfo, node, msg) {
+        nb.User.login(userInfo)
+            .then(function(userObj) {                 
+                Common.sendMessage(node, "ok", userObj, msg);
+                node.status({fill: "green", shape: "dot", text: RED._("nebula.status.authorized")});               
+            })
+            .catch(function(error) {     
+                Common.sendMessage(node, "failed", error, msg);
+                node.status({fill: "red", shape: "ring", text: RED._("nebula.status.unauthorized")});
+            });   
+    };
+    
+    const logout = function(nb, node, msg) {
+        nb.User.logout()
+            .then(function() {
+                Common.sendMessage(node, "ok", null, msg);
+                node.status({fill: "red", shape: "ring", text: RED._("nebula.status.not-logged-in")});
+            })
+            .catch(function(error) {
+                Common.sendMessage(node, "failed", error, msg);
+                node.status({fill: "red", shape: "ring", text: RED._("nebula.status.logout-failed")});
+            });
+    };
+    
+    const setClientCert = function(nb, node, msg) {
+        const certOptions = Common.readClientCertificate(node, node.config);
+        nb.setClientCertificate(certOptions);
+        node.context().flow.set('Nebula', nb);
+        Common.sendMessage(node, "ok", null, msg);
+        node.status({fill: "green", shape: "dot", text: RED._("nebula.status.cert-is-set")});
+    };
+    
     function NebulaInitAuthNode(config) {
         RED.nodes.createNode(this, config);
-        var node = this;
-        this.name = config.name;
-        this.func = config.func;
 
-        var nebulaServer = RED.nodes.getNode(config.nebulaServer);
-        var credAuth = this.credentials;
-        var initFlag = config.initFlag;
-        var action = config.action;
+        this.nebulaServer = RED.nodes.getNode(config.nebulaServer);
+        this.credAuth = this.credentials;
+        this.initFlag = config.initFlag;
+        this.action = config.action;
 
         if (config.pfxType) {
             config.certType = "CERT_TYPE_PFX";
         } else if (config.pemType) {
             config.certType = "CERT_TYPE_PEM";
         }
-
+        
+        this.config = config;
+        const node = this;
+        
         try {
-            if (initFlag) {
-                Common.initNebula(node, this.context(), nebulaServer, config);
-            } else {
-                // no initialize
+            if (node.initFlag) {
+                Common.initNebula(node, node.context(), node.nebulaServer, node.config);
             }
         } catch(err) {
             node.warn(err);
@@ -65,45 +95,28 @@ module.exports = function (RED) {
         node.status({fill: "red", shape: "ring", text: RED._("nebula.status.not-logged-in")});
         
         this.on('input', function(msg) {
-            var Nebula = this.context().flow.get('Nebula');
+            const nb = node.context().flow.get('Nebula');
 
             try {
-                if (action === "LOGIN") { 
-                    var nebulaEmail = msg.email ? msg.email : (credAuth && credAuth.email ? credAuth.email : null);
-                    var nebulaUser = msg.username ? msg.username : (credAuth && credAuth.userName ? credAuth.userName : null);
-                    var nebulaPwd = msg.password ? msg.password : (credAuth && credAuth.password ? credAuth.password : null);
+                if (node.action === "LOGIN") { 
+                    const nebulaEmail = msg.hasOwnProperty('email') ? msg.email : 
+                                        (node.credAuth && node.credAuth.email ? node.credAuth.email : null);
+                    const nebulaUser = msg.hasOwnProperty('username') ? msg.username : 
+                                        (node.credAuth && node.credAuth.userName ? node.credAuth.userName : null);
+                    const nebulaPwd = msg.hasOwnProperty('password') ? msg.password : 
+                                        (node.credAuth && node.credAuth.password ? node.credAuth.password : null);
                     
-                    var userInfo = {
+                    const userInfo = {
                         "email"  : nebulaEmail,
                         "username": nebulaUser,
                         "password"  : nebulaPwd
                         };
-     
-                    Nebula.User.login(userInfo)
-                        .then(function(userObj) {                 
-                            Common.sendMessage(node, "ok", userObj, msg);
-                            node.status({fill: "green", shape: "dot", text: RED._("nebula.status.authorized")});               
-                        })
-                        .catch(function(error) {     
-                            Common.sendMessage(node, "failed", error, msg);
-                            node.status({fill: "red", shape: "ring", text: RED._("nebula.status.unauthorized")});
-                        });   
-                } else if (action === "LOGOUT") {
-                    Nebula.User.logout()
-                        .then(function() {
-                            Common.sendMessage(node, "ok", null, msg);
-                            node.status({fill: "red", shape: "ring", text: RED._("nebula.status.not-logged-in")});
-                        })
-                        .catch(function(error) {
-                            Common.sendMessage(node, "failed", error, msg);
-                            node.status({fill: "red", shape: "ring", text: RED._("nebula.status.logout-failed")});
-                        });
-                } else if (action === "USE_CLIENT_CERT") { 
-                    var certOptions = Common.readClientCertificate(node, config);
-                    Nebula.setClientCertificate(certOptions);
-                    this.context().flow.set('Nebula', Nebula);
-                    Common.sendMessage(node, "ok", null, msg);
-                    node.status({fill: "green", shape: "dot", text: RED._("nebula.status.cert-is-set")});
+
+                    login(nb, userInfo, node, msg);   
+                } else if (node.action === "LOGOUT") {
+                    logout(nb, node, msg); 
+                } else if (node.action === "USE_CLIENT_CERT") { 
+                    setClientCert(nb, node, msg);
                 } else {
                     node.warn(RED._("nebula.errors.no-action-selected"));
                 }
@@ -111,7 +124,6 @@ module.exports = function (RED) {
                 node.warn(err);
             }   
         });
-   
     }
     RED.nodes.registerType("auth", NebulaInitAuthNode, {
         credentials: {
