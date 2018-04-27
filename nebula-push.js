@@ -33,10 +33,6 @@ module.exports = function (RED) {
     function NebulaPushOutNode(config) {
         RED.nodes.createNode(this,config);
         
-        this.isGCM = config.gcm;
-        this.isAPNS = config.apns;
-        this.isSSE = config.sse;
-        
         this.gcmTitle = config.gcmTitle;
         this.gcmUri = config.gcmUri;
             
@@ -59,15 +55,15 @@ module.exports = function (RED) {
                     throw RED._("nebula.errors.message-not-found"); 
                 }
                 
-                const channels = msg.hasOwnProperty('channels') ? msg.channels : (config.channelList ? Common.csv2json(config.channelList) : []);
-                const receivers = msg.hasOwnProperty('receivers') ? msg.receivers : (config.receiverList ? Common.csv2json(config.receiverList) : []);
+                const channels = msg.hasOwnProperty('channels') ? msg.channels : (config.channels ? Common.csv2json(config.channels) : []);
+                const receivers = msg.hasOwnProperty('receivers') ? msg.receivers : (config.receivers ? Common.csv2json(config.receivers) : []);
 
                 const push = new nb.PushSender();
                 push.message = message;
 
-                node.isGCM = (msg.hasOwnProperty('gcm') && msg.gcm.hasOwnProperty('enabled')) ? msg.gcm.enabled : config.isGCM;
-                node.isAPNS = (msg.hasOwnProperty('apns') && msg.apns.hasOwnProperty('enabled')) ? msg.apns.enabled : config.isAPNS;
-                node.isSSE = (msg.hasOwnProperty('sse') && msg.sse.hasOwnProperty('enabled')) ? msg.sse.enabled : config.isSSE;
+                node.isGCM = (msg.hasOwnProperty('gcm') && msg.gcm.hasOwnProperty('enabled')) ? msg.gcm.enabled : config.gcm;
+                node.isAPNS = (msg.hasOwnProperty('apns') && msg.apns.hasOwnProperty('enabled')) ? msg.apns.enabled : config.apns;
+                node.isSSE = (msg.hasOwnProperty('sse') && msg.sse.hasOwnProperty('enabled')) ? msg.sse.enabled : config.sse;
                 
                 if (node.isGCM) {
                     const gcm = new nb.PushSender.GcmFields();
@@ -114,7 +110,6 @@ module.exports = function (RED) {
             }
         });
     }
-
     RED.nodes.registerType("push out", NebulaPushOutNode);
 };
 
