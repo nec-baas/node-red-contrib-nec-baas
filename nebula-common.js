@@ -20,8 +20,8 @@
 
 const fs = require('fs');
 const URL = require('url');
-const Nebula = require('./lib/baas.min').Nebula;
-   
+const Nebula = require('@nec-baas/jssdk').Nebula;
+
 /**
  * Common
  */
@@ -44,6 +44,7 @@ class Common {
                 nebulaServer.nebulaConfig.useProxy = true; 
             }
             Common.setupProxy(Nebula, nebulaServer.nebulaConfig.useProxy, node);
+            context.flow.set('useProxy', nebulaServer.nebulaConfig.useProxy);
             context.flow.set('Nebula', service); // Available in the downstream processes in the same flow.
         } else {
             node.warn("Initialize is enabled, but Nebula config is not set.");

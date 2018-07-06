@@ -16,6 +16,78 @@
   limitations under the License.
 -->
 
+
+<script type="text/x-red" data-template-name="push in">
+    <div class="form-row">
+        <label for="node-input-channels"><i class="fa fa-random"></i> <span data-i18n="nebula.label.channels"></span></label>
+        <input type="text" id="node-input-channels" data-i18n="[placeholder]nebula.placeholder.channels">
+    </div>  
+    <div class="form-row">
+        <label for="node-input-senders"><i class="fa fa-random"></i> <span data-i18n="nebula.label.senders"></span></label>
+        <input type="text" id="node-input-senders" data-i18n="[placeholder]nebula.placeholder.senders">
+    </div>  
+    <div class="form-row">
+        <label for="node-input-deviceToken"><i class="fa fa-tag"></i> <span data-i18n="nebula.label.device-token"></span></label>
+        <input type="text" id="node-input-deviceToken">
+    </div>
+    <hr align="middle"></hr>
+    <div class="form-row">
+        <label for="node-input-name"><i class="fa fa-tag"></i> <span data-i18n="nebula.label.name"></span></label>
+        <input type="text" id="node-input-name" data-i18n="[placeholder]nebula.placeholder.name">
+    </div>
+    
+</script>
+
+<script type="text/x-red" data-help-name="push in">
+    <p>Receive a push notification message. This node supports SSE type only.</p>
+       
+    <h4>Incoming messages</h4>
+
+    <h4>Channels, Senders</h4>
+    <p>Set the channels, senders in the edit dialog, or it can be set by <code>msg.channels</code>, <code>msg.senders</code>  on the incoming message.
+    </p>
+
+    <pre>
+msg.channels = ["channel1","channel2","channel3"];
+msg.senders = ["user_id", "g:group1", "g:group2"];
+    </pre>
+    
+    <h4>Device Token</h4>
+    <p>Set the Device Token (e.g. UUID) in the edit dialog. If left blank, it should be set 
+       by <code>msg.deviceToken</code> on the incoming message.The message property is mandatory.</p>
+
+    <pre>
+msg.deviceToken = "11111111-2222-3333-4444-555555555555";
+    </pre>
+    
+    <h4>Sending messages</h4>
+    <p>The function returns the <code>msg.result</code>,<code>msg.payload</code> to pass on to the next nodes
+    in the flow.</p>
+    
+</script>
+
+<script type="text/javascript">
+    RED.nodes.registerType('push in', {
+        color:"#c0deed",
+        category: 'nec baas',
+        defaults: {
+            name: { value:"push"},
+            channels: { value: ""},
+            senders: { value: ""},
+            deviceToken: { value: ""}
+        },
+        inputs:1,
+        outputs:1,
+        icon: "arrow-out.png",
+        align: 'left',
+        label: function() {
+            return this.name;
+        },
+        oneditsave: function() {
+        }
+    });
+</script>
+
 <script type="text/x-red" data-template-name="push out">
     <div class="form-row">
         <label for="node-input-channels"><i class="fa fa-random"></i> <span data-i18n="nebula.label.channels"></span></label>

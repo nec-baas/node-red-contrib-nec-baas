@@ -18,7 +18,65 @@
 
 module.exports = function (RED) {
     "use strict";
+    const SsePush = require('@nec-baas/ssepush-node').SsePush;
     const Common = require('./nebula-common');
+        
+    function NebulaPushInNode(config) {
+        RED.nodes.createNode(this,config);
+        
+        this.deviceToken = config.deviceToken;
+        this.ssePush = null;
+        const node = this;
+
+        this.on('input', function(msg) {
+            const nb = node.context().flow.get('Nebula');
+            const useProxy = node.context().flow.get('useProxy');
+
+            try {         
+                // Use the value of 'msg.deviceToken' if the 'msg' has the deviceToken.
+                const channels = msg.hasOwnProperty('channels') ? 
+                    msg.channels : (config.channels ? Common.csv2json(config.channels) : []);
+                let senders = msg.hasOwnProperty('senders') ? 
+                    msg.senders : (config.senders ? Common.csv2json(config.senders) : []);       
+                if (senders == null || senders.length === 0) {
+                    senders = ["g:anonymous"];
+                }         
+                const deviceToken = msg.hasOwnProperty('deviceToken') ? msg.deviceToken : config.deviceToken;
+                if (!deviceToken) {
+                    throw RED._("nebula.errors.deviceToken-not-found"); 
+                }
+                const proxy = Common.getProxyConfig();
+                const options = {};
+
+                if (useProxy && proxy) {
+                    options.proxy = "http://" + proxy.http.hostname + ":" + proxy.http.port;
+                }
+
+                if (this.ssePush == null) {
+                    this.ssePush = new SsePush(nb, options);
+                }
+
+                this.ssePush.setChannels(channels);
+                this.ssePush.setAllowedSenders(senders);
+                this.ssePush.setDeviceToken(deviceToken);
+                this.ssePush.setHeartbeatInterval(30);
+
+                // Start receving
+                this.ssePush.start({
+                    onMessage: (info) => {
+                        Common.sendMessage(node, "ok", info, msg);
+                    },
+                    onError: (error) => {
+                        Common.sendMessage(node, "failed", error, msg);
+                    }
+                });
+                
+            } catch(err) {
+                node.warn(err);
+            }
+        });
+    }
+    RED.nodes.registerType("push in", NebulaPushInNode);  
        
     const sendPush = function(push, node, msg) {
         push.send()
@@ -55,40 +113,52 @@ module.exports = function (RED) {
                     throw RED._("nebula.errors.message-not-found"); 
                 }
                 
-                const channels = msg.hasOwnProperty('channels') ? msg.channels : (config.channels ? Common.csv2json(config.channels) : []);
-                const receivers = msg.hasOwnProperty('receivers') ? msg.receivers : (config.receivers ? Common.csv2json(config.receivers) : []);
+                const channels = msg.hasOwnProperty('channels') ? 
+                    msg.channels : (config.channels ? Common.csv2json(config.channels) : []);
+                const receivers = msg.hasOwnProperty('receivers') ? 
+                    msg.receivers : (config.receivers ? Common.csv2json(config.receivers) : []);
 
                 const push = new nb.PushSender();
                 push.message = message;
 
-                node.isGCM = (msg.hasOwnProperty('gcm') && msg.gcm.hasOwnProperty('enabled')) ? msg.gcm.enabled : config.gcm;
-                node.isAPNS = (msg.hasOwnProperty('apns') && msg.apns.hasOwnProperty('enabled')) ? msg.apns.enabled : config.apns;
-                node.isSSE = (msg.hasOwnProperty('sse') && msg.sse.hasOwnProperty('enabled')) ? msg.sse.enabled : config.sse;
+                node.isGCM = (msg.hasOwnProperty('gcm') && msg.gcm.hasOwnProperty('enabled')) ? 
+                    msg.gcm.enabled : config.gcm;
+                node.isAPNS = (msg.hasOwnProperty('apns') && msg.apns.hasOwnProperty('enabled')) ? 
+                    msg.apns.enabled : config.apns;
+                node.isSSE = (msg.hasOwnProperty('sse') && msg.sse.hasOwnProperty('enabled')) ? 
+                    msg.sse.enabled : config.sse;
                 
                 if (node.isGCM) {
                     const gcm = new nb.PushSender.GcmFields();
-                    gcm.title = (msg.hasOwnProperty('gcm') && msg.gcm.hasOwnProperty('title')) ? msg.gcm.title : config.gcmTitle;
-                    gcm.uri = (msg.hasOwnProperty('gcm') && msg.gcm.hasOwnProperty('uri')) ? msg.gcm.uri : config.gcmUri;
+                    gcm.title = (msg.hasOwnProperty('gcm') && msg.gcm.hasOwnProperty('title')) ? 
+                        msg.gcm.title : config.gcmTitle;
+                    gcm.uri = (msg.hasOwnProperty('gcm') && msg.gcm.hasOwnProperty('uri')) ? 
+                        msg.gcm.uri : config.gcmUri;
                     push.gcmFields = gcm;
                 }
 
                 if (node.isAPNS) {
-                    node.apnsBadge = (msg.hasOwnProperty('apns') && msg.apns.hasOwnProperty('badge')) ? msg.apns.badge : config.apnsBadge;
+                    node.apnsBadge = (msg.hasOwnProperty('apns') && msg.apns.hasOwnProperty('badge')) ? 
+                        msg.apns.badge : config.apnsBadge;
                     // Convert string to number.
                     const apnsBadgeNumber = RED.util.evaluateNodeProperty(node.apnsBadge, 'num', node, null);   
                     
                     const apns = new nb.PushSender.ApnsFields();
                     apns.badge = apnsBadgeNumber;
-                    apns.sound = (msg.hasOwnProperty('apns') && msg.apns.hasOwnProperty('sound')) ? msg.apns.sound : config.apnsSound;
+                    apns.sound = (msg.hasOwnProperty('apns') && msg.apns.hasOwnProperty('sound')) ? 
+                        msg.apns.sound : config.apnsSound;
                     apns.contentAvailable = 1;
-                    apns.category = (msg.hasOwnProperty('apns') && msg.apns.hasOwnProperty('category')) ? msg.apns.category : config.apnsCategory;
+                    apns.category = (msg.hasOwnProperty('apns') && msg.apns.hasOwnProperty('category')) ? 
+                        msg.apns.category : config.apnsCategory;
                     push.apnsFields = apns;
                 }
 
                 if (node.isSSE) {
                     const sse = new nb.PushSender.SseFields();
-                    sse.eventId = (msg.hasOwnProperty('sse') && msg.sse.hasOwnProperty('eventId')) ? msg.sse.eventId : config.sseEventId;
-                    sse.eventType = (msg.hasOwnProperty('sse') && msg.sse.hasOwnProperty('eventType')) ? msg.sse.eventType : config.sseEventType;
+                    sse.eventId = (msg.hasOwnProperty('sse') && msg.sse.hasOwnProperty('eventId')) ? 
+                        msg.sse.eventId : config.sseEventId;
+                    sse.eventType = (msg.hasOwnProperty('sse') && msg.sse.hasOwnProperty('eventType')) ? 
+                        msg.sse.eventType : config.sseEventType;
                     push.sseFields = sse;
                 }
 
@@ -102,7 +172,6 @@ module.exports = function (RED) {
                     push.allowedReceivers = receivers;
                 }
                 //node.log("push clause: " + JSON.stringify(push));
-
                 sendPush(push, node, msg);
                 
             } catch(err) {
